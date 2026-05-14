@@ -35,8 +35,6 @@ const initialData: QuizData = {
   email: "",
   clube: "",
   jogadorFavorito: "",
-  peso: "",
-  altura: "",
   foto: null,
 };
 
@@ -134,8 +132,6 @@ export default function Home() {
           email: current.email,
           clube: current.clube,
           jogadorFavorito: current.jogadorFavorito,
-          peso: current.peso,
-          altura: current.altura,
           fotoBase64,
           errorTimestamp: retryAfterError || undefined,
         }),
@@ -220,14 +216,14 @@ export default function Home() {
       {appStep === "loading-photo" && (
         <LoadingScreen
           title="CHARGEMENT DE LA PHOTO"
-          gifUrl="https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExNjM0bHRyeHlscG1rM3I3M201d25xenFhbjV1bHlvZ3lsaGdhZ3B0OCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/WxDZ77xhPXf3i/giphy.gif"
+          gifUrl="https://media.giphy.com/media/3oz8xQFuxa9FZgH9W8/giphy.gif"
         />
       )}
 
       {appStep === "loading-generate" && (
         <LoadingScreen
           title="CRÉATION DE VOTRE VIGNETTE"
-          gifUrl="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExeXc1dHJ2bnR2eGt6Nnp5OGQ3Ynd2MHY1aWRpcWN5aGE3ejliYjZlayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/tkzfoxijYuxNK/giphy.gif"
+          gifUrl="https://media.giphy.com/media/1VnzX7WhV8qic/giphy.gif"
           longWait
           startTime={genStartTime}
         />

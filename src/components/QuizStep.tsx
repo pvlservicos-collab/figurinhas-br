@@ -8,32 +8,10 @@ export interface QuizData {
   email: string;
   clube: string;
   jogadorFavorito: string;
-  peso: string;
-  altura: string;
   foto: File | null;
 }
 
 // Tabela de crescimento — percentil 50 brasileiro
-const growthChart: Record<number, { altura: number; peso: number }> = {
-  0: { altura: 50, peso: 3 }, 1: { altura: 76, peso: 10 }, 2: { altura: 88, peso: 12 },
-  3: { altura: 96, peso: 14 }, 4: { altura: 103, peso: 16 }, 5: { altura: 110, peso: 18 },
-  6: { altura: 116, peso: 21 }, 7: { altura: 122, peso: 23 }, 8: { altura: 128, peso: 26 },
-  9: { altura: 133, peso: 29 }, 10: { altura: 138, peso: 32 }, 11: { altura: 143, peso: 36 },
-  12: { altura: 149, peso: 40 }, 13: { altura: 156, peso: 45 }, 14: { altura: 163, peso: 51 },
-  15: { altura: 170, peso: 56 }, 16: { altura: 173, peso: 61 }, 17: { altura: 175, peso: 65 },
-  18: { altura: 175, peso: 68 },
-};
-
-function getEstimatedGrowth(dataNascimento: string) {
-  if (!dataNascimento) return null;
-  const birth = new Date(dataNascimento);
-  const now = new Date();
-  let age = now.getFullYear() - birth.getFullYear();
-  const monthDiff = now.getMonth() - birth.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) age--;
-  if (age < 0) age = 0;
-  return growthChart[Math.min(age, 18)] || growthChart[18];
-}
 
 interface QuizStepProps {
   step: number;
@@ -295,14 +273,8 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
           </div>
         )}
 
-        {/* Step 3: Clube + Peso/Altura */}
-        {step === 3 && (() => {
-          // Sugestão baseada na idade
-          const estimated = getEstimatedGrowth(data.dataNascimento);
-          if (estimated && !data.peso) updateData({ peso: String(estimated.peso) });
-          if (estimated && !data.altura) updateData({ altura: String(estimated.altura) });
-
-          return (
+        {/* Step 3: Clube */}
+        {step === 3 && (
           <div className="flex flex-col gap-5">
             <div className="text-center">
               <span className="text-4xl mb-2 block">⭐</span>
@@ -348,45 +320,8 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
               {errors.clube && <p className="text-red-500 text-sm mt-1">{errors.clube}</p>}
             </div>
 
-            {/* Peso e Altura lado a lado */}
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <label className="block text-sm font-bold mb-1 text-copa-blue" style={{ fontFamily: "var(--font-titulo)" }}>
-                  POIDS (kg)
-                </label>
-                <input
-                  type="number"
-                  value={data.peso}
-                  onChange={(e) => updateData({ peso: e.target.value })}
-                  placeholder={estimated ? String(estimated.peso) : "kg"}
-                  min="1"
-                  max="200"
-                  className="w-full px-4 py-4 text-lg border-2 border-gray-200 rounded-xl focus:border-copa-blue focus:outline-none transition-colors placeholder:text-gray-400"
-                  style={{ fontFamily: "var(--font-papernotes)" }}
-                />
-              </div>
-              <div className="flex-1">
-                <label className="block text-sm font-bold mb-1 text-copa-blue" style={{ fontFamily: "var(--font-titulo)" }}>
-                  TAILLE (cm)
-                </label>
-                <input
-                  type="number"
-                  value={data.altura}
-                  onChange={(e) => updateData({ altura: e.target.value })}
-                  placeholder={estimated ? String(estimated.altura) : "cm"}
-                  min="30"
-                  max="250"
-                  className="w-full px-4 py-4 text-lg border-2 border-gray-200 rounded-xl focus:border-copa-blue focus:outline-none transition-colors placeholder:text-gray-400"
-                  style={{ fontFamily: "var(--font-papernotes)" }}
-                />
-              </div>
-            </div>
-            <p className="text-xs text-gray-400 -mt-3" style={{ fontFamily: "var(--font-papernotes)" }}>
-              Suggestion basée sur l&apos;âge. Modifiez si vous le souhaitez.
-            </p>
           </div>
-          );
-        })()}
+        )}
 
         {/* Navigation buttons */}
         <div className="flex gap-3 mt-8">

@@ -109,9 +109,16 @@ body {
 /* Wiggle suave para figurinhas */
 @keyframes wiggle {
   0%, 100% { transform: rotate(var(--base-rotate, 0deg)) translateY(0); }
-  25% { transform: rotate(calc(var(--base-rotate, 0deg) + 1.5deg)) translateY(-3px); }
-  50% { transform: rotate(calc(var(--base-rotate, 0deg) - 1deg)) translateY(-5px); }
-  75% { transform: rotate(calc(var(--base-rotate, 0deg) + 0.5deg)) translateY(-2px); }
+  25% { transform: rotate(calc(var(--base-rotate, 0deg) + 0.6deg)) translateY(-8px); }
+  50% { transform: rotate(calc(var(--base-rotate, 0deg) - 0.4deg)) translateY(-12px); }
+  75% { transform: rotate(calc(var(--base-rotate, 0deg) + 0.2deg)) translateY(-5px); }
+}
+
+@keyframes wiggle-down {
+  0%, 100% { transform: rotate(var(--base-rotate, 0deg)) translateY(0); }
+  25% { transform: rotate(calc(var(--base-rotate, 0deg) - 0.6deg)) translateY(8px); }
+  50% { transform: rotate(calc(var(--base-rotate, 0deg) + 0.4deg)) translateY(12px); }
+  75% { transform: rotate(calc(var(--base-rotate, 0deg) - 0.2deg)) translateY(5px); }
 }
 
 /* Efeito de brilho passando */

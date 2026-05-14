@@ -8,21 +8,21 @@ interface HeroProps {
 
 export default function Hero({ onStart }: HeroProps) {
   return (
-    <section className="flex flex-col items-center min-h-[100dvh] w-full px-5 py-8 text-center overflow-hidden justify-between" style={{ background: "#FFFFFF" }}>
+    <section className="flex flex-col items-center min-h-[100dvh] w-full px-5 py-4 text-center overflow-hidden justify-between" style={{ background: "#FFFFFF" }}>
       <h1
-        className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] mb-4 max-w-2xl"
+        className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] mb-1 max-w-2xl"
         style={{ fontFamily: "var(--font-titulo)" }}
       >
         Transformez votre enfant en{" "}
-        <span className="text-copa-yellow">vignette Panini personnalisée</span> de la Coupe du Monde
+        <span style={{ color: "#002395" }}>vignette Panini personnalisée</span> de la Coupe du Monde
       </h1>
 
-      <div className="relative w-72 h-72 sm:w-80 sm:h-80 md:w-96 md:h-[400px] mb-2">
+      <div className="relative w-72 h-72 sm:w-80 sm:h-80 md:w-96 md:h-[400px] mb-0 mt-1">
         <div
-          className="absolute left-0 top-6 md:top-8 w-36 h-52 md:w-48 md:h-72 rounded-xl overflow-hidden shadow-xl z-10"
+          className="absolute left-0 top-14 md:top-16 w-36 h-52 md:w-48 md:h-72 rounded-xl overflow-hidden shadow-xl z-10"
           style={{
             transform: "rotate(-8deg)",
-            animation: "wiggle 4s ease-in-out infinite",
+            animation: "wiggle 5.5s ease-in-out infinite",
           }}
         >
           <div className="relative w-full h-full">
@@ -39,9 +39,9 @@ export default function Hero({ onStart }: HeroProps) {
         </div>
 
         <div
-          className="absolute left-[58%] -translate-x-1/2 top-0 w-44 h-64 md:w-60 md:h-[340px] rounded-xl overflow-hidden shadow-2xl z-30"
+          className="absolute left-[58%] -translate-x-1/2 top-8 w-44 h-64 md:w-60 md:h-[340px] rounded-xl overflow-hidden shadow-2xl z-30"
           style={{
-            animation: "wiggle 4s ease-in-out infinite 0.5s",
+            animation: "wiggle 5.5s ease-in-out infinite 0.5s",
           }}
         >
           <div className="relative w-full h-full">
@@ -58,10 +58,10 @@ export default function Hero({ onStart }: HeroProps) {
         </div>
 
         <div
-          className="absolute right-0 top-6 md:top-8 w-36 h-52 md:w-48 md:h-72 rounded-xl overflow-hidden shadow-xl z-10"
+          className="absolute right-0 top-14 md:top-16 w-36 h-52 md:w-48 md:h-72 rounded-xl overflow-hidden shadow-xl z-10"
           style={{
             transform: "rotate(8deg)",
-            animation: "wiggle 4s ease-in-out infinite 1s",
+            animation: "wiggle-down 5.5s ease-in-out infinite 1s",
           }}
         >
           <div className="relative w-full h-full">
@@ -79,7 +79,7 @@ export default function Hero({ onStart }: HeroProps) {
       </div>
 
       <p
-        className="text-lg md:text-xl max-w-md mb-4 leading-relaxed"
+        className="text-lg md:text-xl max-w-md mb-2 leading-relaxed"
         style={{ fontFamily: "var(--font-papernotes)" }}
       >
         Répondez à quelques questions et créez une vignette unique avec le nom,
@@ -96,7 +96,7 @@ export default function Hero({ onStart }: HeroProps) {
         COMMENCER
       </button>
 
-      <div className="mt-6 flex flex-col items-center gap-2">
+      <div className="mt-2 flex flex-col items-center gap-2">
         <div className="flex items-center gap-1">
           {[
             { code: "fr", label: "França", big: true },

@@ -118,11 +118,10 @@ export default function LoadingScreen({ title, gifUrl, longWait, startTime }: Lo
         >
           {longWait ? (
             <>
-              <span className="text-copa-blue font-bold">Le saviez-vous ?</span>{" "}
-              {curiosidades[curiosidadeIndex]}
+              <span className="text-copa-blue font-bold">futur champion en célébration détecté</span>
             </>
           ) : (
-            "Il a vraiment la tête d'un grand champion !"
+            "Hihi… il aime bien"
           )}
         </p>
 
