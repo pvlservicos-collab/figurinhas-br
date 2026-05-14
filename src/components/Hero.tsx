@@ -8,7 +8,7 @@ interface HeroProps {
 
 export default function Hero({ onStart }: HeroProps) {
   return (
-    <section className="flex flex-col items-center min-h-[100dvh] w-full px-5 py-8 text-center overflow-hidden justify-between">
+    <section className="flex flex-col items-center min-h-[100dvh] w-full px-5 py-8 text-center overflow-hidden justify-between" style={{ background: "#FFFFFF" }}>
       <h1
         className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] mb-4 max-w-2xl"
         style={{ fontFamily: "var(--font-titulo)" }}
@@ -27,8 +27,8 @@ export default function Hero({ onStart }: HeroProps) {
         >
           <div className="relative w-full h-full">
             <Image
-              src="/figurinha-helena.png"
-              alt="Figurinha Helena"
+              src="/figurinha-camille.png"
+              alt="Figurinha Camille"
               fill
               className="object-cover"
               sizes="(max-width: 768px) 144px, 192px"
@@ -39,15 +39,15 @@ export default function Hero({ onStart }: HeroProps) {
         </div>
 
         <div
-          className="absolute left-1/2 -translate-x-1/2 top-0 w-44 h-64 md:w-60 md:h-[340px] rounded-xl overflow-hidden shadow-2xl z-30"
+          className="absolute left-[58%] -translate-x-1/2 top-0 w-44 h-64 md:w-60 md:h-[340px] rounded-xl overflow-hidden shadow-2xl z-30"
           style={{
             animation: "wiggle 4s ease-in-out infinite 0.5s",
           }}
         >
           <div className="relative w-full h-full">
             <Image
-              src="/figurinha-miguel.png"
-              alt="Figurinha Miguel"
+              src="/figurinha-antoine.png"
+              alt="Figurinha Antoine"
               fill
               className="object-cover"
               sizes="(max-width: 768px) 176px, 240px"
@@ -66,8 +66,8 @@ export default function Hero({ onStart }: HeroProps) {
         >
           <div className="relative w-full h-full">
             <Image
-              src="/figurinha-arthur.png"
-              alt="Figurinha Arthur"
+              src="/figurinha-camille.png"
+              alt="Figurinha Camille"
               fill
               className="object-cover"
               sizes="(max-width: 768px) 144px, 192px"
