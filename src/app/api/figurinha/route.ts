@@ -169,9 +169,7 @@ export async function POST(req: NextRequest) {
   const clubeFormatted = clubeSafe.toUpperCase();
   const growthData = getGrowthData(dataNascimento);
   // Usar peso/altura do frontend se informados, senão da tabela
-  const pesoFinal = body.peso ? String(body.peso) : String(growthData.peso);
-  const alturaFinal = body.altura ? (Number(body.altura) / 100).toFixed(2).replace(".", ",") : growthData.altura;
-  const infoLine = `${growthData.birthDate} | ${alturaFinal} m | ${pesoFinal} kg`;
+  const infoLine = growthData.birthDate;
 
   // Prompt com dados sanitizados entre delimitadores
   const prompt = `You are given two images:
@@ -184,7 +182,7 @@ INSTRUCTIONS:
 
 1. REMOVE the adult athlete from Image 2 entirely.
 
-2. GENERATE a medium close-up portrait of the person from Image 1: from the chest up, facing forward, arms down. The person must wear the yellow Brazil 2026 national team jersey with green collar. IMPORTANT: the jersey and body must match the REAL proportions of the person from Image 1. If the subject is a child, draw a child-sized body with a child-sized jersey. If the subject is an adult, draw an adult-sized body. Do NOT put a child's head on an adult body.
+2. GENERATE a medium close-up portrait of the person from Image 1: from the chest up, facing forward, arms down. The person must wear the blue France 2026 national team jersey (dark blue, "Bleu de France" #002395) with the French Football Federation badge on the chest. IMPORTANT: the jersey and body must match the REAL proportions of the person from Image 1. If the subject is a child, draw a child-sized body with a child-sized jersey. If the subject is an adult, draw an adult-sized body. Do NOT put a child's head on an adult body.
 
 3. The person's FACE must be identical to Image 1: same facial features, expression, hair, skin tone, eyes, smile. Do not alter the face in any way.
 
@@ -262,11 +260,11 @@ The result must look like a real printed collectible sticker card with a properl
     // Criar versão com marca d'água pro preview/email
     let previewBlobUrl = blob.url; // fallback: usar a original
     try {
-    const resizedBuf = await sharp(stickerBuffer).resize(400).toBuffer();
-    const resMeta = await sharp(resizedBuf).metadata();
-    const w = resMeta.width || 400;
-    const h = resMeta.height || 600;
-    const watermarkSvg = Buffer.from(`
+      const resizedBuf = await sharp(stickerBuffer).resize(400).toBuffer();
+      const resMeta = await sharp(resizedBuf).metadata();
+      const w = resMeta.width || 400;
+      const h = resMeta.height || 600;
+      const watermarkSvg = Buffer.from(`
       <svg width="${w}" height="${h}">
         <defs>
           <pattern id="wm" x="0" y="0" width="200" height="120" patternUnits="userSpaceOnUse" patternTransform="rotate(-30)">
@@ -277,15 +275,15 @@ The result must look like a real printed collectible sticker card with a properl
         <rect width="100%" height="100%" fill="url(#wm)" />
       </svg>
     `);
-    const previewBuffer = await sharp(resizedBuf)
-      .composite([{ input: watermarkSvg, blend: "over" }])
-      .jpeg({ quality: 60 })
-      .toBuffer();
-    const previewBlob = await put(`previews/${stickerId}.jpg`, previewBuffer, {
-      access: "public",
-      contentType: "image/jpeg",
-    });
-    previewBlobUrl = previewBlob.url;
+      const previewBuffer = await sharp(resizedBuf)
+        .composite([{ input: watermarkSvg, blend: "over" }])
+        .jpeg({ quality: 60 })
+        .toBuffer();
+      const previewBlob = await put(`previews/${stickerId}.jpg`, previewBuffer, {
+        access: "public",
+        contentType: "image/jpeg",
+      });
+      previewBlobUrl = previewBlob.url;
     } catch (wmErr) {
       console.error("Erro ao criar preview com marca dagua:", wmErr);
     }
@@ -293,7 +291,7 @@ The result must look like a real printed collectible sticker card with a properl
     // Salvar pedido no banco
     await sql`
       INSERT INTO pedidos (nome, data_nascimento, clube, jogador_favorito, peso_estimado, altura_estimada, sticker_id, sticker_url, preview_url, email, status)
-      VALUES (${nomeSafe}, ${dataNascimento}, ${clubeSafe}, ${jogadorSafe}, ${pesoFinal + " kg"}, ${alturaFinal + " m"}, ${stickerId}, ${blob.url}, ${previewBlobUrl}, ${emailSafe}, 'pendente')
+      VALUES (${nomeSafe}, ${dataNascimento}, ${clubeSafe}, ${jogadorSafe}, ${null}, ${null}, ${stickerId}, ${blob.url}, ${previewBlobUrl}, ${emailSafe}, 'pendente')
     `;
 
     console.log(`Figurinha salva: ${stickerId}`);

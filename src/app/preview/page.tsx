@@ -63,26 +63,26 @@ function PreviewContent() {
           className="text-base text-gray-600 text-center mb-4"
           style={{ fontFamily: "var(--font-papernotes)" }}
         >
-          Aproveite o desconto especial e receba o arquivo digital pronto para impressão.
+          Profitez de l&apos;offre spéciale et recevez le fichier numérique prêt pour l&apos;impression.
         </p>
 
         <p
           className="text-lg text-gray-400 line-through text-center"
           style={{ fontFamily: "'Montserrat', Arial Black, sans-serif", fontWeight: 900 }}
         >
-          R$12,90
+          €3,99
         </p>
 
         <p
           className="text-5xl md:text-6xl text-copa-green text-center mb-6 shine-effect"
           style={{ fontFamily: "'Montserrat', Arial Black, sans-serif", fontWeight: 900 }}
         >
-          R$9,90
+          €2,99
         </p>
 
         <button
           onClick={() => {
-            const checkoutUrl = process.env.NEXT_PUBLIC_CHECKOUT_URL || "https://pay.onprofit.com.br/QfTIp4Og?off=YgebkF";
+            const checkoutUrl = process.env.NEXT_PUBLIC_CHECKOUT_URL || "https://eaglemedia.mycartpanda.com/checkout/210148860:1";
             const p = new URLSearchParams(window.location.search);
             const utmKeys = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid", "ttclid", "sck"];
             const utms: string[] = [];

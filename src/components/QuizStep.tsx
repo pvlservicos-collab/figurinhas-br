@@ -196,7 +196,7 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
             </div>
             <div className="flex gap-3">
               <div className="flex-1">
-                <label className="block text-xs font-bold mb-1 text-copa-blue" style={{ fontFamily: "var(--font-titulo)" }}>JOUR</label>
+                <label className="block text-xs font-bold mb-1 text-copa-blue" style={{ fontFamily: "Arial, sans-serif" }}>JOUR</label>
                 <select
                   value={birthDay}
                   onChange={(e) => {
@@ -215,7 +215,7 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
                 </select>
               </div>
               <div className="flex-[1.3]">
-                <label className="block text-xs font-bold mb-1 text-copa-blue" style={{ fontFamily: "var(--font-titulo)" }}>MOIS</label>
+                <label className="block text-xs font-bold mb-1 text-copa-blue" style={{ fontFamily: "Arial, sans-serif" }}>MOIS</label>
                 <select
                   value={birthMonth}
                   onChange={(e) => {
@@ -228,13 +228,13 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
                   style={{ fontFamily: "var(--font-papernotes)" }}
                 >
                   <option value="">--</option>
-                  {["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"].map((m, i) => (
+                  {["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"].map((m, i) => (
                     <option key={i} value={String(i + 1).padStart(2, "0")}>{m}</option>
                   ))}
                 </select>
               </div>
               <div className="flex-1">
-                <label className="block text-xs font-bold mb-1 text-copa-blue" style={{ fontFamily: "var(--font-titulo)" }}>ANNÉE</label>
+                <label className="block text-xs font-bold mb-1 text-copa-blue" style={{ fontFamily: "Arial, sans-serif" }}>ANNÉE</label>
                 <select
                   value={birthYear}
                   onChange={(e) => {

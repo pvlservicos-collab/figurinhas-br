@@ -3,13 +3,13 @@ import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Sua Figurinha da Copa 2026 | Crie Agora",
+  title: "Ta Vignette Panini de la Coupe du Monde 2026 | Créer maintenant",
   description:
-    "Crie sua figurinha personalizada da Copa do Mundo 2026! Sua foto ao lado dos craques. Impressão profissional por apenas R$12,90.",
+    "Crée ta vignette Panini personnalisée de la Coupe du Monde 2026 ! Ta photo avec le style des champions. Fichier numérique pour seulement €2,99.",
   robots: "index, follow",
   openGraph: {
-    title: "Sua Figurinha da Copa 2026",
-    description: "Crie sua figurinha personalizada da Copa do Mundo 2026!",
+    title: "Ta Vignette Panini de la Coupe du Monde 2026",
+    description: "Crée ta vignette Panini personnalisée de la Coupe du Monde 2026 !",
     type: "website",
   },
 };
@@ -20,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className="h-full antialiased">
+    <html lang="fr" className="h-full antialiased">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
         <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&display=swap" rel="stylesheet" />
@@ -32,10 +32,12 @@ export default function RootLayout({
           src="https://cdn.utmify.com.br/scripts/utms/latest.js"
           data-utmify-prevent-xcod-sck=""
           data-utmify-prevent-subids=""
+          data-utmify-ignore-iframe=""
+          data-utmify-is-cartpanda=""
           strategy="afterInteractive"
         />
         <Script id="utmify-pixel" strategy="afterInteractive">{`
-          window.pixelId = "6a01f90f2bd8b03a22549f61";
+          window.pixelId = "6a0653073ac32b2418844574";
           var a = document.createElement("script");
           a.setAttribute("async", "");
           a.setAttribute("defer", "");
