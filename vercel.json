@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/check-credits",
+      "schedule": "0 */2 * * *"
+    },
+    {
+      "path": "/api/cron/check-whatsapp",
+      "schedule": "*/30 * * * *"
+    }
+  ]
+}
