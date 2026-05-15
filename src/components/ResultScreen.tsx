@@ -75,7 +75,7 @@ export default function ResultScreen({ stickerUrl, stickerId, onRetry }: ResultS
   return (
     <section
       className="flex flex-col items-center min-h-[100dvh] w-full px-4 py-8 justify-center"
-      style={{ userSelect: "none", WebkitUserSelect: "none" }}
+      style={{ background: "#FFDF00", userSelect: "none", WebkitUserSelect: "none" }}
     >
       {!stickerUrl ? (
         <div className="bg-white rounded-2xl p-8 text-center border-4 border-copa-blue max-w-sm w-full animate-slide-up">
@@ -84,10 +84,10 @@ export default function ResultScreen({ stickerUrl, stickerId, onRetry }: ResultS
             className="text-2xl font-bold text-copa-blue mb-2"
             style={{ fontFamily: "var(--font-titulo)" }}
           >
-            ERREUR DE CONNEXION
+            ERRO DE CONEXÃO
           </h2>
           <p className="text-base text-gray-600 mb-6" style={{ fontFamily: "var(--font-papernotes)" }}>
-            Vérifiez votre connexion et appuyez sur le bouton ci-dessous.
+            Verifique sua conexão e clique no botão abaixo.
           </p>
           <button
             onClick={onRetry}
@@ -95,7 +95,7 @@ export default function ResultScreen({ stickerUrl, stickerId, onRetry }: ResultS
               shadow-lg hover:bg-copa-blue-hover active:scale-95 transition-all duration-200 cursor-pointer tracking-[0.1em]"
             style={{ fontFamily: "var(--font-titulo)" }}
           >
-            RÉESSAYER
+            TENTAR NOVAMENTE
           </button>
         </div>
       ) : (
@@ -143,7 +143,7 @@ export default function ResultScreen({ stickerUrl, stickerId, onRetry }: ResultS
             className="text-6xl md:text-8xl font-bold text-copa-blue text-center tracking-[0.1em] mb-1"
             style={{ fontFamily: "var(--font-titulo)" }}
           >
-            BUUUT !
+            GOOLL!
           </h1>
 
           {/* Subtítulo */}
@@ -151,7 +151,7 @@ export default function ResultScreen({ stickerUrl, stickerId, onRetry }: ResultS
             className="text-lg md:text-xl text-copa-blue text-center font-bold mb-2"
             style={{ fontFamily: "var(--font-papernotes)" }}
           >
-            Votre vignette est prête !
+            Sua figurinha está pronta!
           </p>
 
           {/* Descrição */}
@@ -159,7 +159,7 @@ export default function ResultScreen({ stickerUrl, stickerId, onRetry }: ResultS
             className="text-base text-gray-600 text-center mb-6"
             style={{ fontFamily: "var(--font-papernotes)" }}
           >
-            Recevez le fichier <strong>NUMÉRIQUE</strong> prêt pour l&apos;<strong>IMPRESSION</strong>
+            Receba o arquivo <strong>DIGITAL</strong> para a <strong>IMPRESSÃO</strong>
           </p>
 
           {/* Preço centralizado com brilho */}
@@ -167,7 +167,7 @@ export default function ResultScreen({ stickerUrl, stickerId, onRetry }: ResultS
             className="text-5xl md:text-6xl text-copa-green text-center mb-6 relative inline-block shine-effect"
             style={{ fontFamily: "'Montserrat', Arial Black, sans-serif", fontWeight: 900 }}
           >
-            €2,99
+            R$12,90
           </p>
 
           {/* Botão */}
@@ -177,7 +177,7 @@ export default function ResultScreen({ stickerUrl, stickerId, onRetry }: ResultS
               shadow-lg hover:bg-copa-blue-hover active:scale-95 transition-all duration-200 cursor-pointer tracking-[0.15em]"
             style={{ fontFamily: "var(--font-titulo)" }}
           >
-            RECEVOIR MA VIGNETTE
+            RECEBER MINHA FIGURINHA
           </button>
         </div>
       )}

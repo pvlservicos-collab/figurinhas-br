@@ -35,6 +35,8 @@ const initialData: QuizData = {
   email: "",
   clube: "",
   jogadorFavorito: "",
+  peso: "",
+  altura: "",
   foto: null,
 };
 
@@ -215,15 +217,15 @@ export default function Home() {
 
       {appStep === "loading-photo" && (
         <LoadingScreen
-          title="CHARGEMENT DE LA PHOTO"
-          gifUrl="https://media.giphy.com/media/3oz8xQFuxa9FZgH9W8/giphy.gif"
+          title="CARREGANDO FOTO"
+          gifUrl="https://media4.giphy.com/media/WxDZ77xhPXf3i/giphy.gif"
         />
       )}
 
       {appStep === "loading-generate" && (
         <LoadingScreen
-          title="CRÉATION DE VOTRE VIGNETTE"
-          gifUrl="https://media.giphy.com/media/1VnzX7WhV8qic/giphy.gif"
+          title="GERANDO SUA FIGURINHA"
+          gifUrl="https://media3.giphy.com/media/tkzfoxijYuxNK/giphy.gif"
           longWait
           startTime={genStartTime}
         />

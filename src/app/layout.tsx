@@ -3,13 +3,13 @@ import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Ta Vignette Panini de la Coupe du Monde 2026 | Créer maintenant",
+  title: "Sua Figurinha Panini da Copa do Mundo 2026 | Crie agora",
   description:
-    "Crée ta vignette Panini personnalisée de la Coupe du Monde 2026 ! Ta photo avec le style des champions. Fichier numérique pour seulement €2,99.",
+    "Crie sua figurinha Panini personalizada da Copa do Mundo 2026! Sua foto com o estilo dos campeões. Arquivo digital por apenas €2,99.",
   robots: "index, follow",
   openGraph: {
-    title: "Ta Vignette Panini de la Coupe du Monde 2026",
-    description: "Crée ta vignette Panini personnalisée de la Coupe du Monde 2026 !",
+    title: "Sua Figurinha Panini da Copa do Mundo 2026",
+    description: "Crie sua figurinha Panini personalizada da Copa do Mundo 2026!",
     type: "website",
   },
 };
@@ -20,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className="h-full antialiased">
+    <html lang="pt-BR" className="h-full antialiased">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
         <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@900&display=swap" rel="stylesheet" />

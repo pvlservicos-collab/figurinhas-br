@@ -38,7 +38,7 @@
 }
 
 :root {
-  --background: #FFFFFF;
+  --background: #FFDF00;
   --foreground: #1a1a1a;
 }
 
@@ -119,6 +119,20 @@ body {
   25% { transform: rotate(calc(var(--base-rotate, 0deg) - 0.6deg)) translateY(8px); }
   50% { transform: rotate(calc(var(--base-rotate, 0deg) + 0.4deg)) translateY(12px); }
   75% { transform: rotate(calc(var(--base-rotate, 0deg) - 0.2deg)) translateY(5px); }
+}
+
+/* Ocultar widget CartPanda */
+#cpd-button-undefined,
+[id^="cpd-"], [id^="cp-"], [id^="cpsales"], [id^="cartpanda"], [id^="cartx"],
+[class^="cpd-"], [class^="cp-"], [class^="cpsales"], [class^="cartpanda"], [class^="cartx"],
+[id*="cartpanda"], [class*="cartpanda"], [id*="cpsales"], [class*="cpsales"],
+iframe[src*="cartpanda"], iframe[src*="mycartpanda"] {
+  display: none !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
 }
 
 /* Efeito de brilho passando */

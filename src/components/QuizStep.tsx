@@ -8,10 +8,28 @@ export interface QuizData {
   email: string;
   clube: string;
   jogadorFavorito: string;
+  peso: string;
+  altura: string;
   foto: File | null;
 }
 
 // Tabela de crescimento — percentil 50 brasileiro
+function getSugestao(dataNascimento: string): { peso: string; altura: string } {
+  if (!dataNascimento) return { peso: "", altura: "" };
+  const birth = new Date(dataNascimento);
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  if (now < new Date(now.getFullYear(), birth.getMonth(), birth.getDate())) age--;
+  const tabela: [number, number, number][] = [
+    [1, 10, 75], [2, 12, 87], [3, 14, 95], [4, 16, 102], [5, 18, 109],
+    [6, 20, 115], [7, 22, 121], [8, 25, 127], [9, 28, 132], [10, 32, 137],
+    [11, 36, 143], [12, 40, 149], [13, 46, 156], [14, 52, 162], [15, 57, 167],
+    [16, 61, 171], [17, 64, 174],
+  ];
+  const clampedAge = Math.min(Math.max(age, 1), 17);
+  const entry = tabela.find(([a]) => a === clampedAge) || [0, 70, 175];
+  return { peso: String(entry[1]), altura: String(entry[2]) };
+}
 
 interface QuizStepProps {
   step: number;
@@ -23,13 +41,13 @@ interface QuizStepProps {
 }
 
 const clubes = [
-  "Paris Saint-Germain", "Olympique de Marseille", "Olympique Lyonnais", "AS Monaco", "LOSC Lille",
-  "Stade Rennais", "OGC Nice", "RC Lens", "AS Saint-Étienne", "Girondins de Bordeaux",
-  "RC Strasbourg", "FC Nantes", "Montpellier HSC", "Toulouse FC", "Stade de Reims",
-  "Clermont Foot", "Angers SCO", "Le Havre AC", "FC Metz", "AJ Auxerre",
-  "Barcelona", "Real Madrid", "Manchester City", "Liverpool", "Arsenal", "Chelsea",
-  "Bayern Munich", "Borussia Dortmund", "Juventus", "AC Milan", "Inter Milan",
-  "Atlético de Madrid", "Séville FC",
+  "Flamengo", "Corinthians", "Palmeiras", "São Paulo", "Santos",
+  "Grêmio", "Internacional", "Atlético Mineiro", "Cruzeiro", "Botafogo",
+  "Vasco da Gama", "Fluminense", "Bahia", "Sport Recife", "Ceará",
+  "Fortaleza", "Athletico Paranaense", "Coritiba", "América Mineiro", "Goiás",
+  "Red Bull Bragantino", "Cuiabá", "Ponte Preta", "Guarani", "Juventude",
+  "Avaí", "Chapecoense", "Náutico", "Santa Cruz", "Vitória",
+  "Remo", "Paysandu", "CRB", "CSA", "ABC",
 ];
 
 
@@ -43,6 +61,14 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
   const [showClubeList, setShowClubeList] = useState(false);
   const clubeRef = useRef<HTMLDivElement>(null);
 
+  // Sugestão de peso/altura ao entrar no passo 3
+  useEffect(() => {
+    if (step !== 3 || !data.dataNascimento) return;
+    const sug = getSugestao(data.dataNascimento);
+    if (sug.peso && !data.peso) updateData({ peso: sug.peso });
+    if (sug.altura && !data.altura) updateData({ altura: sug.altura });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   // Data de nascimento — campos separados
   const [birthDay, setBirthDay] = useState("");
@@ -67,22 +93,22 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
     const newErrors: Record<string, string> = {};
     switch (step) {
       case 1:
-        if (!data.nome || data.nome.trim().length < 2) newErrors.nome = "Le prénom doit contenir au moins 2 caractères";
-        if (data.nome.length > 50) newErrors.nome = "Prénom trop long";
-        if (!data.foto) newErrors.foto = "Veuillez envoyer la photo du champion";
+        if (!data.nome || data.nome.trim().length < 2) newErrors.nome = "O nome deve ter pelo menos 2 caracteres";
+        if (data.nome.length > 50) newErrors.nome = "Nome muito longo";
+        if (!data.foto) newErrors.foto = "Por favor envie a foto do craque";
         break;
       case 2:
-        if (!data.dataNascimento) newErrors.dataNascimento = "Veuillez indiquer la date de naissance";
+        if (!data.dataNascimento) newErrors.dataNascimento = "Por favor indique a data de nascimento";
         else {
           const birth = new Date(data.dataNascimento);
           const now = new Date();
           const age = now.getFullYear() - birth.getFullYear();
-          if (age < 0 || age > 120) newErrors.dataNascimento = "Date invalide";
+          if (age < 0 || age > 120) newErrors.dataNascimento = "Data inválida";
         }
-        if (!data.email || !data.email.includes("@") || !data.email.includes(".")) newErrors.email = "Veuillez renseigner un e-mail valide";
+        if (!data.email || !data.email.includes("@") || !data.email.includes(".")) newErrors.email = "Por favor insira um e-mail válido";
         break;
       case 3:
-        if (!data.clube || data.clube.trim().length < 2) newErrors.clube = "Saisissez ou sélectionnez un club";
+        if (!data.clube || data.clube.trim().length < 2) newErrors.clube = "Digite ou selecione um clube";
         break;
     }
     setErrors(newErrors);
@@ -96,8 +122,8 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) { setErrors({ foto: "Veuillez envoyer uniquement des images" }); return; }
-    if (file.size > 10 * 1024 * 1024) { setErrors({ foto: "Image trop grande (max. 10 Mo)" }); return; }
+    if (!file.type.startsWith("image/")) { setErrors({ foto: "Por favor envie apenas imagens" }); return; }
+    if (file.size > 10 * 1024 * 1024) { setErrors({ foto: "Imagem muito grande (máx. 10 MB)" }); return; }
     updateData({ foto: file });
     const reader = new FileReader();
     reader.onload = (ev) => setPhotoPreview(ev.target?.result as string);
@@ -108,12 +134,12 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
   const progressPercent = (step / totalSteps) * 100;
 
   return (
-    <section className="flex flex-col items-center min-h-[100dvh] w-full px-4 py-8 md:py-16">
+    <section className="flex flex-col items-center min-h-[100dvh] w-full px-4 py-8 md:py-16" style={{ background: "#FFDF00" }}>
       {/* Progress bar */}
       <div className="w-full max-w-md mb-8">
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm font-bold" style={{ fontFamily: "var(--font-papernotes)" }}>
-            Étape {step} sur {totalSteps}
+            Etapa {step} de {totalSteps}
           </span>
           <span className="text-sm" style={{ fontFamily: "var(--font-papernotes)" }}>
             {Math.round(progressPercent)}%
@@ -133,10 +159,10 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
             <div className="text-center">
               <span className="text-4xl mb-2 block">✍️</span>
               <h2 className="text-2xl md:text-3xl font-black text-copa-blue" style={{ fontFamily: "var(--font-titulo)" }}>
-                QUEL EST LE PRÉNOM DU CHAMPION ?
+                QUAL O NOME DO CRAQUE?
               </h2>
               <p className="text-base mt-1 opacity-70" style={{ fontFamily: "var(--font-papernotes)" }}>
-                Le prénom qui apparaîtra sur la vignette
+                O nome que vai aparecer na figurinha
               </p>
             </div>
             <div>
@@ -144,7 +170,7 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
                 type="text"
                 value={data.nome}
                 onChange={(e) => updateData({ nome: sanitize(e.target.value) })}
-                placeholder="Prénom et nom"
+                placeholder="Nome e sobrenome"
                 maxLength={50}
                 autoComplete="name"
                 className="w-full px-4 py-4 text-lg border-2 border-gray-200 rounded-xl focus:border-copa-blue focus:outline-none transition-colors placeholder:text-gray-400"
@@ -154,24 +180,24 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
             </div>
 
             <div>
-              <label className="block text-sm font-bold mb-2 text-copa-blue" style={{ fontFamily: "var(--font-titulo)" }}>
-                PHOTO DU CHAMPION
+              <label className="block text-lg font-bold mb-2 text-copa-blue" style={{ fontFamily: "var(--font-titulo)" }}>
+                FOTO DO CRAQUE
               </label>
               {photoPreview ? (
                 <div onClick={() => fileInputRef.current?.click()} className="border-2 border-copa-blue rounded-xl p-4 text-center cursor-pointer hover:opacity-90 transition-opacity">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={photoPreview} alt="Preview" className="w-28 h-28 rounded-full mx-auto object-cover border-4 border-copa-blue" />
-                  <p className="text-xs mt-2 text-copa-blue font-bold" style={{ fontFamily: "var(--font-papernotes)" }}>Appuyer pour changer la photo</p>
+                  <p className="text-xs mt-2 text-copa-blue font-bold" style={{ fontFamily: "var(--font-papernotes)" }}>Toque para trocar a foto</p>
                 </div>
               ) : (
                 <div className="flex gap-3">
                   <button type="button" onClick={() => fileInputRef.current?.click()} className="flex-1 border-2 border-dashed border-gray-300 rounded-xl p-5 text-center cursor-pointer hover:border-copa-blue transition-colors">
                     <span className="text-3xl block mb-1">🖼️</span>
-                    <p className="text-sm font-bold" style={{ fontFamily: "var(--font-papernotes)" }}>Galerie</p>
+                    <p className="text-sm font-bold" style={{ fontFamily: "var(--font-papernotes)" }}>Galeria</p>
                   </button>
                   <button type="button" onClick={() => cameraInputRef.current?.click()} className="flex-1 border-2 border-dashed border-gray-300 rounded-xl p-5 text-center cursor-pointer hover:border-copa-blue transition-colors">
                     <span className="text-3xl block mb-1">📸</span>
-                    <p className="text-sm font-bold" style={{ fontFamily: "var(--font-papernotes)" }}>Caméra</p>
+                    <p className="text-sm font-bold" style={{ fontFamily: "var(--font-papernotes)" }}>Câmera</p>
                   </button>
                 </div>
               )}
@@ -188,15 +214,15 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
             <div className="text-center">
               <span className="text-4xl mb-2 block">🎂</span>
               <h2 className="text-2xl md:text-3xl font-black text-copa-blue" style={{ fontFamily: "var(--font-titulo)" }}>
-                DATE DE NAISSANCE
+                DATA DE NASCIMENTO
               </h2>
               <p className="text-base mt-1 opacity-70" style={{ fontFamily: "var(--font-papernotes)" }}>
-                Pour calculer l&apos;âge affiché sur la vignette
+                Pra calcular a idade na figurinha
               </p>
             </div>
             <div className="flex gap-3">
               <div className="flex-1">
-                <label className="block text-xs font-bold mb-1 text-copa-blue" style={{ fontFamily: "Arial, sans-serif" }}>JOUR</label>
+                <label className="block text-base font-bold mb-1 text-copa-blue" style={{ fontFamily: "Arial, sans-serif" }}>DIA</label>
                 <select
                   value={birthDay}
                   onChange={(e) => {
@@ -215,7 +241,7 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
                 </select>
               </div>
               <div className="flex-[1.3]">
-                <label className="block text-xs font-bold mb-1 text-copa-blue" style={{ fontFamily: "Arial, sans-serif" }}>MOIS</label>
+                <label className="block text-base font-bold mb-1 text-copa-blue" style={{ fontFamily: "Arial, sans-serif" }}>MÊS</label>
                 <select
                   value={birthMonth}
                   onChange={(e) => {
@@ -228,13 +254,13 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
                   style={{ fontFamily: "var(--font-papernotes)" }}
                 >
                   <option value="">--</option>
-                  {["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"].map((m, i) => (
+                  {["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"].map((m, i) => (
                     <option key={i} value={String(i + 1).padStart(2, "0")}>{m}</option>
                   ))}
                 </select>
               </div>
               <div className="flex-1">
-                <label className="block text-xs font-bold mb-1 text-copa-blue" style={{ fontFamily: "Arial, sans-serif" }}>ANNÉE</label>
+                <label className="block text-base font-bold mb-1 text-copa-blue" style={{ fontFamily: "Arial, sans-serif" }}>ANO</label>
                 <select
                   value={birthYear}
                   onChange={(e) => {
@@ -257,14 +283,14 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-bold mb-1 text-copa-blue" style={{ fontFamily: "var(--font-titulo)" }}>
-                VOTRE ADRESSE E-MAIL
+              <label className="block text-lg font-bold mb-1 text-copa-blue" style={{ fontFamily: "var(--font-titulo)" }}>
+                SEU MELHOR E-MAIL
               </label>
               <input
                 type="email"
                 value={data.email}
                 onChange={(e) => updateData({ email: e.target.value })}
-                placeholder="exemple@email.com"
+                placeholder="exemplo@email.com"
                 className="w-full px-4 py-4 text-lg border-2 border-gray-200 rounded-xl focus:border-copa-blue focus:outline-none transition-colors placeholder:text-gray-400"
                 style={{ fontFamily: "var(--font-papernotes)" }}
               />
@@ -279,24 +305,24 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
             <div className="text-center">
               <span className="text-4xl mb-2 block">⭐</span>
               <h2 className="text-2xl md:text-3xl font-black text-copa-blue" style={{ fontFamily: "var(--font-titulo)" }}>
-                CLUB ET DONNÉES
+                CLUBE E DADOS
               </h2>
               <p className="text-base mt-1 opacity-70" style={{ fontFamily: "var(--font-papernotes)" }}>
-                Le club de cœur et les données pour la vignette
+                O clube do coração e os dados pra figurinha
               </p>
             </div>
 
             {/* Clube */}
             <div ref={clubeRef} className="relative">
-              <label className="block text-sm font-bold mb-1 text-copa-blue" style={{ fontFamily: "var(--font-titulo)" }}>
-                CLUB PRÉFÉRÉ
+              <label className="block text-lg font-bold mb-1 text-copa-blue" style={{ fontFamily: "var(--font-titulo)" }}>
+                CLUBE DO CORAÇÃO
               </label>
               <input
                 type="text"
                 value={clubeQuery}
                 onChange={(e) => { const v = sanitize(e.target.value); setClubeQuery(v); updateData({ clube: v }); setShowClubeList(true); }}
                 onFocus={() => setShowClubeList(true)}
-                placeholder="Tapez le nom du club..."
+                placeholder="Digite o nome do clube..."
                 maxLength={50}
                 className="w-full px-4 py-4 text-lg border-2 border-gray-200 rounded-xl focus:border-copa-blue focus:outline-none transition-colors placeholder:text-gray-400"
                 style={{ fontFamily: "var(--font-papernotes)" }}
@@ -311,14 +337,51 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
                     >{c}</button>
                   )) : (
                     <div className="px-4 py-3 text-center" style={{ fontFamily: "var(--font-papernotes)" }}>
-                      <p className="font-bold text-copa-blue">Club personnalisé</p>
-                      <p className="text-sm text-gray-500">Nous utiliserons &laquo;&nbsp;{clubeQuery}&nbsp;&raquo;</p>
+                      <p className="font-bold text-copa-blue">Clube personalizado</p>
+                      <p className="text-sm text-gray-500">Vamos usar &ldquo;{clubeQuery}&rdquo;</p>
                     </div>
                   )}
                 </div>
               )}
               {errors.clube && <p className="text-red-500 text-sm mt-1">{errors.clube}</p>}
             </div>
+
+            {/* Peso e Altura */}
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <label className="block text-lg font-bold mb-1 text-copa-blue" style={{ fontFamily: "var(--font-titulo)" }}>
+                  PESO (kg)
+                </label>
+                <input
+                  type="number"
+                  value={data.peso || ""}
+                  onChange={(e) => updateData({ peso: e.target.value })}
+                  placeholder="Ex: 25"
+                  min={1}
+                  max={200}
+                  className="w-full px-4 py-4 text-lg border-2 border-gray-200 rounded-xl focus:border-copa-blue focus:outline-none transition-colors placeholder:text-gray-400"
+                  style={{ fontFamily: "var(--font-papernotes)" }}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-lg font-bold mb-1 text-copa-blue" style={{ fontFamily: "var(--font-titulo)" }}>
+                  ALTURA (cm)
+                </label>
+                <input
+                  type="number"
+                  value={data.altura || ""}
+                  onChange={(e) => updateData({ altura: e.target.value })}
+                  placeholder="Ex: 127"
+                  min={30}
+                  max={250}
+                  className="w-full px-4 py-4 text-lg border-2 border-gray-200 rounded-xl focus:border-copa-blue focus:outline-none transition-colors placeholder:text-gray-400"
+                  style={{ fontFamily: "var(--font-papernotes)" }}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 -mt-3 text-center" style={{ fontFamily: "var(--font-papernotes)" }}>
+              Sugestão baseada na idade. Altere se quiser.
+            </p>
 
           </div>
         )}
@@ -329,13 +392,13 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
             <button onClick={onBack}
               className="flex-1 px-6 py-4 rounded-xl border-2 border-copa-blue text-copa-blue font-bold hover:bg-copa-blue hover:text-copa-white transition-all duration-200 cursor-pointer tracking-[0.15em]"
               style={{ fontFamily: "var(--font-titulo)" }}
-            >RETOUR</button>
+            >VOLTAR</button>
           )}
           <button onClick={handleNext}
             className="flex-1 bg-copa-blue text-copa-white font-bold text-lg px-6 py-4 rounded-xl shadow-lg hover:bg-copa-blue-hover active:scale-95 transition-all duration-200 cursor-pointer tracking-[0.15em]"
             style={{ fontFamily: "var(--font-titulo)" }}
           >
-            {step === totalSteps ? "CRÉER MA VIGNETTE ⚽" : "SUIVANT →"}
+            {step === totalSteps ? "GERAR FIGURINHA ⚽" : "PRÓXIMO →"}
           </button>
         </div>
       </div>

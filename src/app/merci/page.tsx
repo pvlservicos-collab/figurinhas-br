@@ -41,7 +41,7 @@ export default function Merci() {
   };
 
   return (
-    <main className="flex flex-col items-center min-h-screen bg-white px-5 py-8 overflow-hidden">
+    <main className="flex flex-col items-center min-h-screen px-5 py-8 overflow-hidden" style={{ background: "#FFDF00" }}>
 
       {/* Figurinhas animadas no topo */}
       <div className="relative w-56 h-56 sm:w-64 sm:h-64 mb-4 flex-shrink-0">
@@ -77,12 +77,11 @@ export default function Merci() {
       {/* Título sempre centralizado */}
       <div className="w-full max-w-3xl flex flex-col items-center animate-slide-up">
         <h1
-          className="text-5xl md:text-7xl font-bold text-copa-blue text-center tracking-[0.1em] mb-1"
+          className="text-5xl md:text-7xl font-bold text-copa-blue text-center tracking-[0.1em] mb-6"
           style={{ fontFamily: "var(--font-titulo)" }}
         >
-          MERCI !
+          OBRIGADO! ⚽
         </h1>
-        <span className="text-5xl mb-6">⚽</span>
 
         {/* Card com a figurinha da pessoa — mobile: aqui (abaixo do título), PC: à direita via flex-row */}
         <div className={`w-full flex flex-col ${stickerUrl || loading ? "md:flex-row md:gap-10 md:items-start" : ""}`}>
@@ -104,10 +103,10 @@ export default function Merci() {
                       shadow-lg hover:bg-copa-blue-hover active:scale-95 transition-all duration-200 cursor-pointer tracking-[0.1em] flex items-center justify-center gap-2"
                     style={{ fontFamily: "var(--font-titulo)" }}
                   >
-                    ⬇ TÉLÉCHARGER MA VIGNETTE
+                    ⬇ BAIXAR MINHA FIGURINHA
                   </button>
                   <p className="text-sm text-copa-blue font-bold text-center" style={{ fontFamily: "var(--font-papernotes)" }}>
-                    Cliquez pour télécharger votre vignette
+                    Clique para baixar sua figurinha
                   </p>
                 </>
               ) : null}
@@ -120,23 +119,23 @@ export default function Merci() {
               className="text-xl text-center leading-relaxed mb-2"
               style={{ fontFamily: "var(--font-papernotes)" }}
             >
-              Votre paiement a été confirmé !
+              Seu pagamento foi confirmado!
             </p>
 
             <p
               className="text-lg text-center leading-relaxed mb-2"
               style={{ fontFamily: "var(--font-papernotes)" }}
             >
-              Votre <strong className="text-copa-blue">vignette personnalisée</strong> vous sera
-              envoyée par <strong className="text-copa-blue">e-mail</strong> dans
-              moins de <strong className="text-copa-blue">30 minutes</strong>.
+              Sua <strong className="text-copa-blue">figurinha personalizada</strong> será enviada para o seu
+              <strong className="text-copa-blue"> e-mail</strong> em
+              até <strong className="text-copa-blue">30 minutos</strong>.
             </p>
 
             <p
               className="text-base text-gray-600 text-center mb-6"
               style={{ fontFamily: "var(--font-papernotes)" }}
             >
-              Le fichier PDF sera prêt à imprimer, avec 9 vignettes au format standard (6,5 x 9 cm).
+              O arquivo PDF virá pronto para impressão, com 9 figurinhas no tamanho padrão (6,5 x 9 cm).
             </p>
 
             <a
@@ -145,7 +144,7 @@ export default function Merci() {
                 shadow-lg hover:bg-copa-blue-hover active:scale-95 transition-all duration-200 cursor-pointer tracking-[0.1em] text-center block"
               style={{ fontFamily: "var(--font-titulo)" }}
             >
-              CRÉER UNE NOUVELLE VIGNETTE
+              CRIAR NOVA FIGURINHA
             </a>
           </div>
 
