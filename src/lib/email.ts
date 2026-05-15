@@ -1,7 +1,7 @@
 // Módulo centralizado de envio de email
 // Ordem: Hostinger SMTP (principal) → Gmail SMTP (fallback) → Resend (último recurso)
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://minha-figurinha-copa2026.vercel.app";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://gerarfigurinhas.vercel.app";
 
 function buildEmailHtml(customerName: string, pdfUrl?: string): string {
   const dlLink = pdfUrl ? `${APP_URL}/api/download?url=${encodeURIComponent(pdfUrl)}&name=figurinha-copa-2026` : "";

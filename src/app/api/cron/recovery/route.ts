@@ -3,7 +3,7 @@ import { getDb } from "@/lib/db";
 
 export const maxDuration = 60;
 
-const BASE_URL = "https://minha-figurinha-copa2026.vercel.app";
+const BASE_URL = "https://gerarfigurinhas.vercel.app";
 
 export async function GET(req: NextRequest) {
   // Proteger com token (mesmo do cron da Vercel)
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
             <table cellpadding="0" cellspacing="0" border="0" align="center" style="margin: 0 auto;">
               <tr>
                 <td style="width: 200px; height: 300px; background-image: url('${imgUrl}'); background-size: cover; background-position: center; border-radius: 12px; border: 3px solid #1E3A8A; overflow: hidden;">
-                  <img src="https://minha-figurinha-copa2026.vercel.app/watermark.png" width="200" height="300" alt="" style="display: block; opacity: 0.45;" />
+                  <img src="https://gerarfigurinhas.vercel.app/watermark.png" width="200" height="300" alt="" style="display: block; opacity: 0.45;" />
                 </td>
               </tr>
             </table>
@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
             Indique para seus amigos!
           </p>
           <div style="text-align: center; margin-bottom: 12px;">
-            <a href="https://minha-figurinha-copa2026.vercel.app/" style="color: #1E3A8A; font-weight: bold; font-size: 14px;">Criar nova figurinha</a>
+            <a href="https://gerarfigurinhas.vercel.app/" style="color: #1E3A8A; font-weight: bold; font-size: 14px;">Criar nova figurinha</a>
           </div>
         </div>
       </body></html>`;

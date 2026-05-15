@@ -17,12 +17,14 @@ export default function Hero({ onStart }: HeroProps) {
         <span style={{ color: "#002395" }}>figurinha personalizada</span> da Copa do Mundo
       </h1>
 
-      <div className="relative w-72 h-72 sm:w-80 sm:h-80 md:w-96 md:h-[400px] mb-4 mt-1" style={{ transform: "scale(1.05)" }}>
+      <div className="relative w-72 h-72 sm:w-80 sm:h-80 md:w-96 md:h-[400px] mb-4 mt-1">
         <div
           className="absolute left-0 top-14 md:top-16 w-36 h-52 md:w-48 md:h-72 rounded-xl overflow-hidden shadow-md z-10"
           style={{
-            transform: "rotate(-8deg)",
+            transform: "rotate(-8deg) translateZ(0)",
             animation: "wiggle 5.5s ease-in-out infinite",
+            willChange: "transform",
+            backfaceVisibility: "hidden",
           }}
         >
           <div className="relative w-full h-full">
@@ -41,7 +43,10 @@ export default function Hero({ onStart }: HeroProps) {
         <div
           className="absolute left-[58%] -translate-x-1/2 top-8 w-44 h-64 md:w-60 md:h-[340px] rounded-xl overflow-hidden shadow-md z-30"
           style={{
-            animation: "wiggle 5.5s ease-in-out infinite 0.5s",
+            transform: "translateZ(0)",
+            animation: "wiggle-center 5.5s ease-in-out infinite 0.5s",
+            willChange: "transform",
+            backfaceVisibility: "hidden",
           }}
         >
           <div className="relative w-full h-full">
@@ -60,8 +65,10 @@ export default function Hero({ onStart }: HeroProps) {
         <div
           className="absolute right-0 top-14 md:top-16 w-36 h-52 md:w-48 md:h-72 rounded-xl overflow-hidden shadow-md z-10"
           style={{
-            transform: "rotate(8deg)",
+            transform: "rotate(8deg) translateZ(0)",
             animation: "wiggle-down 5.5s ease-in-out infinite 1s",
+            willChange: "transform",
+            backfaceVisibility: "hidden",
           }}
         >
           <div className="relative w-full h-full">

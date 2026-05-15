@@ -165,7 +165,7 @@ async function sendEmailViaGmail(to: string, customerName: string, pdfUrl: strin
         Conhece alguem que ia amar ter uma figurinha personalizada?
       </p>
       <div style="text-align: center; margin-bottom: 16px;">
-        <a href="https://minha-figurinha-copa2026.vercel.app/" style="display: inline-block; background: #1E3A8A; color: white; font-weight: bold; font-size: 16px; padding: 14px 32px; border-radius: 12px; text-decoration: none;">CRIAR NOVA FIGURINHA</a>
+        <a href="https://gerarfigurinhas.vercel.app/" style="display: inline-block; background: #1E3A8A; color: white; font-weight: bold; font-size: 16px; padding: 14px 32px; border-radius: 12px; text-decoration: none;">CRIAR NOVA FIGURINHA</a>
       </div>
       <p style="font-size: 12px; color: #999; text-align: center;">
         Figurinha Copa 2026 - Arquivo digital para impressao.
@@ -220,7 +220,7 @@ async function sendEmailViaResend(to: string, customerName: string, pdfBuffer: B
           Conhece alguém que ia amar ter uma figurinha personalizada?
         </p>
         <div style="text-align: center; margin-bottom: 16px;">
-          <a href="https://minha-figurinha-copa2026.vercel.app/" style="display: inline-block; background: #1E3A8A; color: white; font-weight: bold; font-size: 16px; padding: 14px 32px; border-radius: 12px; text-decoration: none;">CRIAR NOVA FIGURINHA</a>
+          <a href="https://gerarfigurinhas.vercel.app/" style="display: inline-block; background: #1E3A8A; color: white; font-weight: bold; font-size: 16px; padding: 14px 32px; border-radius: 12px; text-decoration: none;">CRIAR NOVA FIGURINHA</a>
         </div>
         <p style="font-size: 12px; color: #999; text-align: center;">
           Figurinha Copa 2026 — Arquivo digital para impressão.
@@ -337,7 +337,7 @@ export async function POST(req: NextRequest) {
               <p style="font-size:14px;color:#666;text-align:center">Clique no botao acima para acessar todos os arquivos do album.</p>
               <hr style="border:1px solid #FFD700;margin:20px 0"/>
               <p style="font-size:16px;text-align:center">Conhece alguem que ia amar ter uma figurinha personalizada?</p>
-              <div style="text-align:center;margin:12px 0"><a href="https://minha-figurinha-copa2026.vercel.app/" style="display:inline-block;background:#1E3A8A;color:white;font-weight:bold;padding:14px 32px;border-radius:12px;text-decoration:none">CRIAR NOVA FIGURINHA</a></div>
+              <div style="text-align:center;margin:12px 0"><a href="https://gerarfigurinhas.vercel.app/" style="display:inline-block;background:#1E3A8A;color:white;font-weight:bold;padding:14px 32px;border-radius:12px;text-decoration:none">CRIAR NOVA FIGURINHA</a></div>
             </div>`,
           }).catch(async () => {
             const t2 = nodemailer.createTransport({ service: "gmail", auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } });
@@ -355,7 +355,7 @@ export async function POST(req: NextRequest) {
     if (bumpId.includes("pacot") || bumpId.includes("impressa") || bumpId.includes("impressão")) {
       if (customerEmail) {
         try {
-          const pacotinhoUrl = "https://minha-figurinha-copa2026.vercel.app/pacotinho-copa-2026.pdf";
+          const pacotinhoUrl = "https://gerarfigurinhas.vercel.app/pacotinho-copa-2026.pdf";
           const pdfRes = await fetch(pacotinhoUrl);
           const pdfBuf = Buffer.from(await pdfRes.arrayBuffer());
           const resend = new Resend(process.env.RESEND_API_KEY);
@@ -437,7 +437,7 @@ export async function POST(req: NextRequest) {
 
             const bumpRows = await sql`SELECT product_name FROM pedido_items WHERE email = ${customerEmail} AND item_type = 'order_bump'`.catch(() => []);
             const bNames = bumpRows.map((b: Record<string, string>) => (b.product_name || "").toLowerCase());
-            const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://minha-figurinha-copa2026.vercel.app";
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://gerarfigurinhas.vercel.app";
             if (bNames.some(n => n.includes("pacot") || n.includes("impressa"))) {
               materiais.push({ tipo: "pacotinho", url: `${appUrl}/pacotinho-copa-2026.pdf` });
             }
@@ -501,7 +501,7 @@ export async function POST(req: NextRequest) {
                 <p style="font-size: 16px; text-align: center;">Segue em anexo o seu <strong>Poster A2</strong> da figurinha em alta resolucao, pronto para impressao!</p>
                 <p style="font-size: 14px; color: #666; text-align: center;">Dica: imprima em uma grafica para melhor qualidade. O formato e A2 (42 x 59,4 cm).</p>
                 <hr style="border: 1px solid #FFD700; margin: 20px 0;" />
-                <p style="font-size: 12px; color: #999; text-align: center;">Conhece alguem que ia amar ter uma figurinha? <a href='https://minha-figurinha-copa2026.vercel.app/' style='color:#1E3A8A;font-weight:bold'>Crie uma agora!</a></p>
+                <p style="font-size: 12px; color: #999; text-align: center;">Conhece alguem que ia amar ter uma figurinha? <a href='https://gerarfigurinhas.vercel.app/' style='color:#1E3A8A;font-weight:bold'>Crie uma agora!</a></p>
               </div>
             </body></html>`;
 

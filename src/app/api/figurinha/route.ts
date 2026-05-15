@@ -182,7 +182,7 @@ INSTRUCTIONS:
 
 1. REMOVE the adult athlete from Image 2 entirely.
 
-2. GENERATE a medium close-up portrait of the person from Image 1: from the chest up, facing forward, arms down. The person must wear the blue France 2026 national team jersey (dark blue, "Bleu de France" #002395) with the French Football Federation badge on the chest. IMPORTANT: the jersey and body must match the REAL proportions of the person from Image 1. If the subject is a child, draw a child-sized body with a child-sized jersey. If the subject is an adult, draw an adult-sized body. Do NOT put a child's head on an adult body.
+2. GENERATE a medium close-up portrait of the person from Image 1: from the chest up, facing forward, arms down. The person must wear the yellow and green Brazil 2026 national team jersey (yellow body #FFDF00, green collar and sleeves #009C3B, CBF badge on the left chest). IMPORTANT: the jersey and body must match the REAL proportions of the person from Image 1. If the subject is a child, draw a child-sized body with a child-sized jersey. If the subject is an adult, draw an adult-sized body. Do NOT put a child's head on an adult body.
 
 3. The person's FACE must be identical to Image 1: same facial features, expression, hair, skin tone, eyes, smile. Do not alter the face in any way.
 

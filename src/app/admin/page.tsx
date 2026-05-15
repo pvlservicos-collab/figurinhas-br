@@ -185,7 +185,7 @@ export default function AdminDashboard() {
       if (p.pdf_url) linksMsg += `\n📄 PDF para Impressão:\n${p.pdf_url}\n`;
     }
 
-    const msg = `Olá ${p.nome}! ⚽\n\nSua figurinha personalizada da Copa 2026 está pronta!\n\nAqui estão seus materiais:${linksMsg}\nObrigado pela compra! 🇧🇷\n\n✨ Conhece alguém que ia amar ter uma figurinha personalizada? Indique para os amigos:\nhttps://minha-figurinha-copa2026.vercel.app/`;
+    const msg = `Olá ${p.nome}! ⚽\n\nSua figurinha personalizada da Copa 2026 está pronta!\n\nAqui estão seus materiais:${linksMsg}\nObrigado pela compra! 🇧🇷\n\n✨ Conhece alguém que ia amar ter uma figurinha personalizada? Indique para os amigos:\nhttps://gerarfigurinhas.vercel.app/`;
     const url = phone
       ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
       : `https://wa.me/?text=${encodeURIComponent(msg)}`;

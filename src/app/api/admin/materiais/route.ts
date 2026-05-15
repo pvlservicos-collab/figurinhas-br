@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
     ? await sql`SELECT DISTINCT product_name FROM pedido_items WHERE email = ${customerEmail} AND item_type = 'order_bump'`
     : [];
 
-  const BASE = "https://minha-figurinha-copa2026.vercel.app";
+  const BASE = "https://gerarfigurinhas.vercel.app";
   const dl = (url: string, name: string) => `${BASE}/api/download?url=${encodeURIComponent(url)}&name=${encodeURIComponent(name)}`;
 
   const materiais: { tipo: string; nome: string; url: string }[] = [];

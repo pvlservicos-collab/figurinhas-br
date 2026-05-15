@@ -76,7 +76,7 @@ export async function GET(req: NextRequest) {
       // Verificar order bumps adicionais
       const bumps = await sql`SELECT product_name FROM pedido_items WHERE email = ${p.email} AND item_type = 'order_bump'`.catch(() => []);
       const bNames = bumps.map((b: Record<string, string>) => (b.product_name || "").toLowerCase());
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://minha-figurinha-copa2026.vercel.app";
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://gerarfigurinhas.vercel.app";
 
       if (bNames.some((n: string) => n.includes("pacot") || n.includes("impressa"))) {
         materiais.push({ tipo: "pacotinho", url: `${appUrl}/pacotinho-copa-2026.pdf` });

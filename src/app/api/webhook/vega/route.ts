@@ -167,7 +167,7 @@ export async function POST(req: NextRequest) {
         // Enviar email
         let emailEnviado = false;
         const fileNameBase = customerName.toLowerCase().replace(/\s+/g, "-");
-        const dlLink = `https://minha-figurinha-copa2026.vercel.app/api/download?url=${encodeURIComponent(pdfBlob.url)}&name=figurinha-copa-2026`;
+        const dlLink = `https://gerarfigurinhas.vercel.app/api/download?url=${encodeURIComponent(pdfBlob.url)}&name=figurinha-copa-2026`;
 
         // 1. Gmail SMTP
         try {
@@ -180,7 +180,7 @@ export async function POST(req: NextRequest) {
             from: `Figurinha Copa 2026 <${process.env.SMTP_USER}>`,
             to: customerEmail,
             subject: "Sua Figurinha da Copa 2026 esta pronta! ⚽",
-            html: `<div style="font-family:Arial;max-width:600px;margin:0 auto;padding:20px"><h1 style="color:#1E3A8A;text-align:center">GOOLL! ⚽</h1><p style="font-size:18px;text-align:center">Ola <b>${customerName}</b>!</p><p style="font-size:16px;text-align:center">Sua figurinha personalizada da Copa do Mundo 2026 esta pronta!</p><div style="text-align:center;margin:20px 0"><a href="${dlLink}" style="display:inline-block;background:#009739;color:white;font-weight:bold;font-size:18px;padding:16px 40px;border-radius:12px;text-decoration:none">BAIXAR FIGURINHA (PDF)</a></div><p style="font-size:14px;color:#666;text-align:center">Em anexo voce encontra a figurinha avulsa (PNG) e o PDF para impressao.</p><hr style="border:1px solid #FFD700;margin:20px 0"/><p style="font-size:16px;text-align:center">Conhece alguem que ia amar ter uma figurinha personalizada?</p><div style="text-align:center;margin:12px 0"><a href="https://minha-figurinha-copa2026.vercel.app/" style="display:inline-block;background:#1E3A8A;color:white;font-weight:bold;padding:14px 32px;border-radius:12px;text-decoration:none">CRIAR NOVA FIGURINHA</a></div></div>`,
+            html: `<div style="font-family:Arial;max-width:600px;margin:0 auto;padding:20px"><h1 style="color:#1E3A8A;text-align:center">GOOLL! ⚽</h1><p style="font-size:18px;text-align:center">Ola <b>${customerName}</b>!</p><p style="font-size:16px;text-align:center">Sua figurinha personalizada da Copa do Mundo 2026 esta pronta!</p><div style="text-align:center;margin:20px 0"><a href="${dlLink}" style="display:inline-block;background:#009739;color:white;font-weight:bold;font-size:18px;padding:16px 40px;border-radius:12px;text-decoration:none">BAIXAR FIGURINHA (PDF)</a></div><p style="font-size:14px;color:#666;text-align:center">Em anexo voce encontra a figurinha avulsa (PNG) e o PDF para impressao.</p><hr style="border:1px solid #FFD700;margin:20px 0"/><p style="font-size:16px;text-align:center">Conhece alguem que ia amar ter uma figurinha personalizada?</p><div style="text-align:center;margin:12px 0"><a href="https://gerarfigurinhas.vercel.app/" style="display:inline-block;background:#1E3A8A;color:white;font-weight:bold;padding:14px 32px;border-radius:12px;text-decoration:none">CRIAR NOVA FIGURINHA</a></div></div>`,
             attachments: [
               { filename: `figurinha-${fileNameBase}.png`, content: Buffer.from(stickerBytes) },
               { filename: `figurinhas-impressao-${fileNameBase}.pdf`, content: pdfBuffer },
@@ -200,7 +200,7 @@ export async function POST(req: NextRequest) {
               from: "Figurinha Copa 2026 <onboarding@resend.dev>",
               to: customerEmail,
               subject: "Sua Figurinha da Copa 2026 está pronta! ⚽",
-              html: `<div style="font-family:Arial;max-width:600px;margin:0 auto;padding:20px"><h1 style="color:#1E3A8A;text-align:center">GOOLL! ⚽</h1><p style="font-size:18px;text-align:center">Olá <b>${customerName}</b>!</p><p style="font-size:16px;text-align:center">Sua figurinha personalizada da Copa do Mundo 2026 está pronta!</p><p style="font-size:14px;color:#666;text-align:center">Em anexo você encontra a figurinha avulsa e o PDF para impressão.</p><hr style="border:1px solid #FFD700;margin:20px 0"/><p style="font-size:16px;text-align:center">Conhece alguém que ia amar ter uma figurinha?</p><div style="text-align:center;margin:12px 0"><a href="https://minha-figurinha-copa2026.vercel.app/" style="display:inline-block;background:#1E3A8A;color:white;font-weight:bold;padding:14px 32px;border-radius:12px;text-decoration:none">CRIAR NOVA FIGURINHA</a></div></div>`,
+              html: `<div style="font-family:Arial;max-width:600px;margin:0 auto;padding:20px"><h1 style="color:#1E3A8A;text-align:center">GOOLL! ⚽</h1><p style="font-size:18px;text-align:center">Olá <b>${customerName}</b>!</p><p style="font-size:16px;text-align:center">Sua figurinha personalizada da Copa do Mundo 2026 está pronta!</p><p style="font-size:14px;color:#666;text-align:center">Em anexo você encontra a figurinha avulsa e o PDF para impressão.</p><hr style="border:1px solid #FFD700;margin:20px 0"/><p style="font-size:16px;text-align:center">Conhece alguém que ia amar ter uma figurinha?</p><div style="text-align:center;margin:12px 0"><a href="https://gerarfigurinhas.vercel.app/" style="display:inline-block;background:#1E3A8A;color:white;font-weight:bold;padding:14px 32px;border-radius:12px;text-decoration:none">CRIAR NOVA FIGURINHA</a></div></div>`,
               attachments: [
                 { filename: `figurinha-${fileNameBase}.png`, content: Buffer.from(stickerBytes).toString("base64") },
                 { filename: `figurinhas-impressao-${fileNameBase}.pdf`, content: pdfBuffer.toString("base64") },
@@ -235,7 +235,7 @@ export async function POST(req: NextRequest) {
           service: "gmail",
           auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
         });
-        const pacotinhoRes = await fetch("https://minha-figurinha-copa2026.vercel.app/pacotinho-copa-2026.pdf");
+        const pacotinhoRes = await fetch("https://gerarfigurinhas.vercel.app/pacotinho-copa-2026.pdf");
         const pacotinhoBuf = Buffer.from(await pacotinhoRes.arrayBuffer());
         await transporter.sendMail({
           from: `Figurinha Copa 2026 <${process.env.SMTP_USER}>`,

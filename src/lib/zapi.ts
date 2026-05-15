@@ -33,17 +33,17 @@ const ctas = [
   `Obrigado pela compra! 🇧🇷
 
 Conhece alguém que ia amar ter uma figurinha personalizada? Indique:
-https://minha-figurinha-copa2026.vercel.app/`,
+https://gerarfigurinhas.vercel.app/`,
 
   `Valeu pela confiança! 🇧🇷
 
 Quer presentear alguém especial? Crie outra figurinha:
-https://minha-figurinha-copa2026.vercel.app/`,
+https://gerarfigurinhas.vercel.app/`,
 
   `Foi um prazer criar essa figurinha! 🇧🇷
 
 Indique pra um amigo e faça a alegria de alguém:
-https://minha-figurinha-copa2026.vercel.app/`,
+https://gerarfigurinhas.vercel.app/`,
 ];
 
 function formatPhone(phone: string): string {
