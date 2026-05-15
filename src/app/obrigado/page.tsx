@@ -19,10 +19,20 @@ export default function Obrigado() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // 1. Melhor caso: URL base64 já está na sessão (mesma aba, geração recém feita)
+    const urlFromSession = (() => { try { return sessionStorage.getItem("figurinha_sticker_url"); } catch { return null; } })();
+    if (urlFromSession) {
+      setStickerUrl(urlFromSession);
+      setLoading(false);
+      return;
+    }
+
+    // 2. Fallback: buscar pela API usando ID (URL param > sessionStorage > localStorage)
     const params = new URLSearchParams(window.location.search);
-    const idFromUrl = params.get("src");
-    const idFromStorage = (() => { try { return localStorage.getItem("figurinha_sticker_id"); } catch { return null; } })();
-    const id = idFromUrl || idFromStorage;
+    const id =
+      params.get("src") ||
+      (() => { try { return sessionStorage.getItem("figurinha_sticker_id"); } catch { return null; } })() ||
+      (() => { try { return localStorage.getItem("figurinha_sticker_id"); } catch { return null; } })();
 
     if (!id) { setLoading(false); return; }
 
@@ -129,7 +139,7 @@ export default function Obrigado() {
               className="text-lg text-center leading-relaxed mb-4"
               style={{ fontFamily: "var(--font-papernotes)" }}
             >
-              Sua <strong className="text-copa-blue">figurinha personalizada</strong> está sendo gerada. Você tem <strong className="text-copa-blue">2 opções</strong> para recebê-la:
+              Sua <strong className="text-copa-blue">figurinha personalizada</strong> já está pronta! Você tem <strong className="text-copa-blue">2 opções</strong> para recebê-la:
             </p>
 
             <div className="w-full flex flex-col gap-3 mb-6">
@@ -149,6 +159,10 @@ export default function Obrigado() {
 
             <a
               href="/"
+              onClick={() => {
+                try { localStorage.removeItem("figurinha_sticker_id"); } catch { /* ignore */ }
+                try { sessionStorage.removeItem("figurinha_sticker_url"); sessionStorage.removeItem("figurinha_sticker_id"); } catch { /* ignore */ }
+              }}
               className="w-full bg-copa-blue text-copa-white font-bold text-xl py-5 rounded-2xl
                 shadow-lg hover:bg-copa-blue-hover active:scale-95 transition-all duration-200 cursor-pointer tracking-[0.1em] text-center block mb-3"
               style={{ fontFamily: "var(--font-titulo)" }}

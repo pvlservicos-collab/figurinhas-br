@@ -146,6 +146,7 @@ export default function Home() {
         setErrorTimestamp(null);
         sessionStorage.setItem("figurinha_sticker_url", dataUrl);
         sessionStorage.setItem("figurinha_sticker_id", result.stickerId || "");
+        try { localStorage.setItem("figurinha_sticker_id", result.stickerId || ""); } catch { /* ignore */ }
       } else {
         console.error("Erro:", result.error);
         setStickerUrl("");
