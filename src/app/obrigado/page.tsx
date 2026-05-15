@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useEffect } from "react";
 
 async function fetchWithRetry(url: string, attempts = 3): Promise<Response> {
@@ -57,11 +58,42 @@ export default function Obrigado() {
   };
 
   return (
-    <main className="flex flex-col items-center min-h-screen px-5 py-8 overflow-hidden" style={{ background: "#FFDF00" }}>
+    <main className="flex flex-col items-center min-h-screen px-5 py-4 overflow-hidden" style={{ background: "#FFDF00" }}>
 
-<div className="w-full max-w-3xl flex flex-col items-center animate-slide-up">
+      {/* Figurinhas animadas no topo */}
+      <div className="relative w-56 h-56 sm:w-64 sm:h-64 mb-1 flex-shrink-0">
+        <div
+          className="absolute left-0 top-4 w-24 h-36 rounded-xl overflow-hidden shadow-xl z-10"
+          style={{ transform: "rotate(-8deg)", animation: "wiggle 5.5s ease-in-out infinite" }}
+        >
+          <div className="relative w-full h-full">
+            <Image src="/figurinha-helena.png" alt="Figurinha Helena" fill className="object-cover" sizes="96px" />
+            <div className="absolute inset-0 shine-effect" />
+          </div>
+        </div>
+        <div
+          className="absolute left-[58%] -translate-x-1/2 top-2 w-32 h-48 rounded-xl overflow-hidden shadow-2xl z-30"
+          style={{ animation: "wiggle 5.5s ease-in-out infinite 0.5s" }}
+        >
+          <div className="relative w-full h-full">
+            <Image src="/figurinha-miguel.png" alt="Figurinha Miguel" fill className="object-cover" sizes="128px" />
+            <div className="absolute inset-0 shine-effect" style={{ animationDelay: "1s" }} />
+          </div>
+        </div>
+        <div
+          className="absolute right-0 top-4 w-24 h-36 rounded-xl overflow-hidden shadow-xl z-10"
+          style={{ transform: "rotate(8deg)", animation: "wiggle-down 5.5s ease-in-out infinite 1s" }}
+        >
+          <div className="relative w-full h-full">
+            <Image src="/figurinha-helena.png" alt="Figurinha Helena" fill className="object-cover" sizes="96px" />
+            <div className="absolute inset-0 shine-effect" style={{ animationDelay: "2s" }} />
+          </div>
+        </div>
+      </div>
+
+      <div className="w-full max-w-3xl flex flex-col items-center animate-slide-up">
         <h1
-          className="text-5xl md:text-7xl font-bold text-copa-blue text-center tracking-[0.1em] mb-6"
+          className="text-5xl md:text-7xl font-bold text-copa-blue text-center tracking-[0.1em] mb-4"
           style={{ fontFamily: "var(--font-titulo)" }}
         >
           OBRIGADO!
@@ -120,7 +152,7 @@ export default function Obrigado() {
               <div className="bg-white rounded-2xl p-4 border-2 border-copa-blue flex items-start gap-3">
                 <span className="text-2xl">📱</span>
                 <p className="text-base text-left" style={{ fontFamily: "var(--font-papernotes)" }}>
-                  <strong className="text-copa-blue">Nessa tela</strong> — aguarde alguns instantes e sua figurinha pode aparecer aqui acima assim que ficar pronta.
+                  <strong className="text-copa-blue">Nessa tela</strong> — aguarde alguns instantes e sua figurinha pode aparecer aqui assim que ficar pronta.
                 </p>
               </div>
             </div>

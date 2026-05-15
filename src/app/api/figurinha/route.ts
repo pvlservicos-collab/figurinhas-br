@@ -9,28 +9,9 @@ import { getDb } from "@/lib/db";
 
 export const maxDuration = 300;
 
-// Tabela de crescimento — percentil 50 brasileiro (altura cm, peso kg)
-const growthChart: Record<number, { altura: number; peso: number }> = {
-  0: { altura: 50, peso: 3 }, 1: { altura: 76, peso: 10 }, 2: { altura: 88, peso: 12 },
-  3: { altura: 96, peso: 14 }, 4: { altura: 103, peso: 16 }, 5: { altura: 110, peso: 18 },
-  6: { altura: 116, peso: 21 }, 7: { altura: 122, peso: 23 }, 8: { altura: 128, peso: 26 },
-  9: { altura: 133, peso: 29 }, 10: { altura: 138, peso: 32 }, 11: { altura: 143, peso: 36 },
-  12: { altura: 149, peso: 40 }, 13: { altura: 156, peso: 45 }, 14: { altura: 163, peso: 51 },
-  15: { altura: 170, peso: 56 }, 16: { altura: 173, peso: 61 }, 17: { altura: 175, peso: 65 },
-  18: { altura: 175, peso: 68 },
-};
-
-function getGrowthData(dataNascimento: string) {
+function formatBirthDate(dataNascimento: string): string {
   const birth = new Date(dataNascimento);
-  const now = new Date();
-  let age = now.getFullYear() - birth.getFullYear();
-  const monthDiff = now.getMonth() - birth.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) age--;
-  if (age < 0) age = 0;
-  const data = growthChart[Math.min(age, 18)] || growthChart[18];
-  const alturaM = (data.altura / 100).toFixed(2).replace(".", ",");
-  const birthDate = `${String(birth.getDate()).padStart(2, "0")}-${String(birth.getMonth() + 1).padStart(2, "0")}-${birth.getFullYear()}`;
-  return { birthDate, altura: alturaM, peso: data.peso };
+  return `${String(birth.getDate()).padStart(2, "0")}-${String(birth.getMonth() + 1).padStart(2, "0")}-${birth.getFullYear()}`;
 }
 
 let cachedModeloBuffer: Buffer | null = null;
@@ -167,9 +148,7 @@ export async function POST(req: NextRequest) {
 
   const nomeUpper = nomeSafe.toUpperCase();
   const clubeFormatted = clubeSafe.toUpperCase();
-  const growthData = getGrowthData(dataNascimento);
-  // Usar peso/altura do frontend se informados, senão da tabela
-  const infoLine = growthData.birthDate;
+  const infoLine = formatBirthDate(dataNascimento);
 
   // Prompt com dados sanitizados entre delimitadores
   const prompt = `You are given two images:
