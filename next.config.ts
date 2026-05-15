@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     formats: ["image/webp"],
     remotePatterns: [
       { protocol: "https", hostname: "flagcdn.com" },
+      { protocol: "https", hostname: "q2gdaftns1gmkspz.public.blob.vercel-storage.com" },
     ],
   },
   async headers() {

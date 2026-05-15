@@ -35,8 +35,6 @@ const initialData: QuizData = {
   email: "",
   clube: "",
   jogadorFavorito: "",
-  peso: "",
-  altura: "",
   foto: null,
 };
 

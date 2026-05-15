@@ -8,27 +8,7 @@ export interface QuizData {
   email: string;
   clube: string;
   jogadorFavorito: string;
-  peso: string;
-  altura: string;
   foto: File | null;
-}
-
-// Tabela de crescimento — percentil 50 brasileiro
-function getSugestao(dataNascimento: string): { peso: string; altura: string } {
-  if (!dataNascimento) return { peso: "", altura: "" };
-  const birth = new Date(dataNascimento);
-  const now = new Date();
-  let age = now.getFullYear() - birth.getFullYear();
-  if (now < new Date(now.getFullYear(), birth.getMonth(), birth.getDate())) age--;
-  const tabela: [number, number, number][] = [
-    [1, 10, 75], [2, 12, 87], [3, 14, 95], [4, 16, 102], [5, 18, 109],
-    [6, 20, 115], [7, 22, 121], [8, 25, 127], [9, 28, 132], [10, 32, 137],
-    [11, 36, 143], [12, 40, 149], [13, 46, 156], [14, 52, 162], [15, 57, 167],
-    [16, 61, 171], [17, 64, 174],
-  ];
-  const clampedAge = Math.min(Math.max(age, 1), 17);
-  const entry = tabela.find(([a]) => a === clampedAge) || [0, 70, 175];
-  return { peso: String(entry[1]), altura: String(entry[2]) };
 }
 
 interface QuizStepProps {
@@ -41,13 +21,34 @@ interface QuizStepProps {
 }
 
 const clubes = [
-  "Flamengo", "Corinthians", "Palmeiras", "São Paulo", "Santos",
-  "Grêmio", "Internacional", "Atlético Mineiro", "Cruzeiro", "Botafogo",
-  "Vasco da Gama", "Fluminense", "Bahia", "Sport Recife", "Ceará",
-  "Fortaleza", "Athletico Paranaense", "Coritiba", "América Mineiro", "Goiás",
-  "Red Bull Bragantino", "Cuiabá", "Ponte Preta", "Guarani", "Juventude",
-  "Avaí", "Chapecoense", "Náutico", "Santa Cruz", "Vitória",
-  "Remo", "Paysandu", "CRB", "CSA", "ABC",
+  // Série A
+  "Flamengo", "Corinthians", "Palmeiras", "São Paulo", "Grêmio",
+  "Internacional", "Atlético Mineiro", "Cruzeiro", "Botafogo", "Vasco da Gama",
+  "Fluminense", "Bahia", "Athletico Paranaense", "Fortaleza", "Red Bull Bragantino",
+  "Santos", "Ceará", "Sport Recife", "Juventude", "Mirassol",
+  // Série B
+  "América Mineiro", "Goiás", "Coritiba", "Vitória", "Cuiabá",
+  "Ponte Preta", "Avaí", "Chapecoense", "Guarani", "Novorizontino",
+  "Operário", "Vila Nova", "CRB", "Paysandu", "Ituano",
+  "Sampaio Corrêa", "Náutico", "ABC", "CSA", "Atlético Goianiense",
+  // Série C
+  "Botafogo-SP", "Figueirense", "Remo", "Santa Cruz", "Tombense",
+  "Volta Redonda", "Ferroviário", "Ypiranga", "São Bernardo", "Maringá",
+  "Floresta", "Confiança", "Aparecidense", "Atlético CE", "Londrina",
+  "Caldense", "Pouso Alegre", "Anápolis", "Caxias", "Brusque",
+  // Série D e tradicionais
+  "Náutico", "América RN", "Potiguar", "Treze", "Campinense",
+  "Altos", "4 de Julho", "CSE", "Murici", "Sergipe",
+  "Jacuipense", "Atlético BA", "Bahia de Feira", "Juazeirense", "Vitória da Conquista",
+  "Tocantinópolis", "Palmas", "Brasília", "Luziânia", "Gama",
+  "Sobradinho", "Real Brasília", "Goianésia", "Iporá", "Goiatuba",
+  "Caldas Novas", "Itumbiara", "Rio Verde", "Senador Canedo", "Formosa",
+  "Tupi", "Democrata", "Patrocinense", "Uberaba", "Villa Nova",
+  "Uberlândia", "Ipatinga", "Betim", "Atlético Acreano", "Rio Branco AC",
+  "Fast Clube", "Nacional AM", "São Raimundo AM", "Princesa do Solimões",
+  "Tuna Luso", "Caeté", "Independente PA", "Castanhal",
+  "Atlético Roraima", "São Raimundo RR",
+  "Moto Club", "Maranhão", "Imperatriz", "Sampaio Corrêa MA",
 ];
 
 
@@ -60,15 +61,6 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
   const [clubeQuery, setClubeQuery] = useState(data.clube || "");
   const [showClubeList, setShowClubeList] = useState(false);
   const clubeRef = useRef<HTMLDivElement>(null);
-
-  // Sugestão de peso/altura ao entrar no passo 3
-  useEffect(() => {
-    if (step !== 3 || !data.dataNascimento) return;
-    const sug = getSugestao(data.dataNascimento);
-    if (sug.peso && !data.peso) updateData({ peso: sug.peso });
-    if (sug.altura && !data.altura) updateData({ altura: sug.altura });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step]);
 
   // Data de nascimento — campos separados
   const [birthDay, setBirthDay] = useState("");
@@ -346,42 +338,6 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
               {errors.clube && <p className="text-red-500 text-sm mt-1">{errors.clube}</p>}
             </div>
 
-            {/* Peso e Altura */}
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <label className="block text-lg font-bold mb-1 text-copa-blue" style={{ fontFamily: "var(--font-titulo)" }}>
-                  PESO (kg)
-                </label>
-                <input
-                  type="number"
-                  value={data.peso || ""}
-                  onChange={(e) => updateData({ peso: e.target.value })}
-                  placeholder="Ex: 25"
-                  min={1}
-                  max={200}
-                  className="w-full px-4 py-4 text-lg border-2 border-gray-200 rounded-xl focus:border-copa-blue focus:outline-none transition-colors placeholder:text-gray-400"
-                  style={{ fontFamily: "var(--font-papernotes)" }}
-                />
-              </div>
-              <div className="flex-1">
-                <label className="block text-lg font-bold mb-1 text-copa-blue" style={{ fontFamily: "var(--font-titulo)" }}>
-                  ALTURA (cm)
-                </label>
-                <input
-                  type="number"
-                  value={data.altura || ""}
-                  onChange={(e) => updateData({ altura: e.target.value })}
-                  placeholder="Ex: 127"
-                  min={30}
-                  max={250}
-                  className="w-full px-4 py-4 text-lg border-2 border-gray-200 rounded-xl focus:border-copa-blue focus:outline-none transition-colors placeholder:text-gray-400"
-                  style={{ fontFamily: "var(--font-papernotes)" }}
-                />
-              </div>
-            </div>
-            <p className="text-xs text-gray-500 -mt-3 text-center" style={{ fontFamily: "var(--font-papernotes)" }}>
-              Sugestão baseada na idade. Altere se quiser.
-            </p>
 
           </div>
         )}
