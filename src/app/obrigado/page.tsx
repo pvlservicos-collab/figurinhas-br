@@ -58,10 +58,10 @@ export default function Obrigado() {
   };
 
   return (
-    <main className="flex flex-col items-center min-h-screen px-5 py-4 overflow-hidden" style={{ background: "#FFDF00" }}>
+    <main className="flex flex-col items-center min-h-screen px-5 pt-10 pb-8 overflow-hidden" style={{ background: "#FFDF00" }}>
 
       {/* Figurinhas animadas no topo */}
-      <div className="relative w-56 h-56 sm:w-64 sm:h-64 mb-1 flex-shrink-0">
+      <div className="relative w-56 h-56 sm:w-64 sm:h-64 mb-0 flex-shrink-0">
         <div
           className="absolute left-0 top-4 w-24 h-36 rounded-xl overflow-hidden shadow-xl z-10"
           style={{ transform: "rotate(-8deg)", animation: "wiggle 5.5s ease-in-out infinite" }}
