@@ -46,7 +46,14 @@ export default function Obrigado() {
   const handleDownload = () => {
     if (!stickerUrl) return;
     const a = document.createElement("a");
-    a.href = `/api/download?url=${encodeURIComponent(stickerUrl)}&name=minha-figurinha-copa2026`;
+    if (stickerUrl.startsWith("data:")) {
+      // Base64 da sessão — baixa direto, sem passar pela API
+      a.href = stickerUrl;
+      a.download = "minha-figurinha-copa2026.png";
+    } else {
+      // URL do Blob — usa proxy da API
+      a.href = `/api/download?url=${encodeURIComponent(stickerUrl)}&name=minha-figurinha-copa2026`;
+    }
     a.click();
   };
 

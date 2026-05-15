@@ -21,11 +21,13 @@ interface QuizStepProps {
 }
 
 const clubes = [
-  // Série A
+  // Mais famosos
   "Flamengo", "Corinthians", "Palmeiras", "São Paulo", "Grêmio",
   "Internacional", "Atlético Mineiro", "Cruzeiro", "Botafogo", "Vasco da Gama",
-  "Fluminense", "Bahia", "Athletico Paranaense", "Fortaleza", "Red Bull Bragantino",
-  "Santos", "Ceará", "Sport Recife", "Juventude", "Mirassol",
+  "Fluminense", "Santos",
+  // Demais Série A 2025
+  "Bahia", "Athletico Paranaense", "Fortaleza", "Red Bull Bragantino",
+  "Ceará", "Sport Recife", "Juventude", "Mirassol",
   // Série B
   "América Mineiro", "Goiás", "Coritiba", "Vitória", "Cuiabá",
   "Ponte Preta", "Avaí", "Chapecoense", "Guarani", "Novorizontino",
@@ -37,7 +39,7 @@ const clubes = [
   "Floresta", "Confiança", "Aparecidense", "Atlético CE", "Londrina",
   "Caldense", "Pouso Alegre", "Anápolis", "Caxias", "Brusque",
   // Série D e tradicionais
-  "Náutico", "América RN", "Potiguar", "Treze", "Campinense",
+  "América RN", "Potiguar", "Treze", "Campinense",
   "Altos", "4 de Julho", "CSE", "Murici", "Sergipe",
   "Jacuipense", "Atlético BA", "Bahia de Feira", "Juazeirense", "Vitória da Conquista",
   "Tocantinópolis", "Palmas", "Brasília", "Luziânia", "Gama",
