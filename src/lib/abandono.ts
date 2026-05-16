@@ -67,8 +67,7 @@ export async function enviarEmailAbandono(params: {
   previewUrl?: string;
   stickerId?: string;
 }): Promise<boolean> {
-  const gmailScriptUrl = process.env.GMAIL_SCRIPT_URL;
-  if (!gmailScriptUrl) return false;
+  if (!process.env.RESEND_API_KEY) return false;
 
   const { email, nome, tipo, previewUrl, stickerId } = params;
 
@@ -80,15 +79,50 @@ export async function enviarEmailAbandono(params: {
     ? `Sua figurinha da Copa ficou pelo caminho, ${nome.split(" ")[0]}!`
     : `A figurinha de ${nome} está prestes a ser excluída!`;
 
-  try {
-    await fetch(gmailScriptUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json; charset=utf-8" },
-      body: JSON.stringify({ email, nome, subject, html }),
-      redirect: "follow",
-    });
-    return true;
-  } catch {
-    return false;
+  // 1. Hostinger SMTP (se configurado)
+  if (process.env.HOSTINGER_SMTP_HOST && process.env.HOSTINGER_SMTP_USER) {
+    try {
+      const nodemailer = (await import("nodemailer")).default;
+      const t = nodemailer.createTransport({
+        host: process.env.HOSTINGER_SMTP_HOST,
+        port: Number(process.env.HOSTINGER_SMTP_PORT) || 465,
+        secure: true,
+        auth: { user: process.env.HOSTINGER_SMTP_USER, pass: process.env.HOSTINGER_SMTP_PASS },
+      });
+      await t.sendMail({ from: `Figurinha Copa 2026 <${process.env.HOSTINGER_SMTP_USER}>`, to: email, subject, html });
+      return true;
+    } catch (err) {
+      console.error("Hostinger abandono falhou:", err instanceof Error ? err.message : err);
+    }
   }
+
+  // 2. Gmail SMTP (app password — sem domínio necessário)
+  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+    try {
+      const nodemailer = (await import("nodemailer")).default;
+      const t = nodemailer.createTransport({
+        service: "gmail",
+        auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      });
+      await t.sendMail({ from: `Figurinha Copa 2026 <${process.env.SMTP_USER}>`, to: email, subject, html });
+      return true;
+    } catch (err) {
+      console.error("Gmail abandono falhou:", err instanceof Error ? err.message : err);
+    }
+  }
+
+  // 3. Resend (fallback, requer domínio verificado em produção)
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const { Resend } = await import("resend");
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const from = process.env.RESEND_FROM || "onboarding@resend.dev";
+      await resend.emails.send({ from, to: email, subject, html });
+      return true;
+    } catch (err) {
+      console.error("Resend abandono falhou:", err instanceof Error ? err.message : err);
+    }
+  }
+
+  return false;
 }
