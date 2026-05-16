@@ -74,11 +74,18 @@ export default function Home() {
     }
   }, []);
 
-  // Proteger contra saída durante geração
+  // Proteger contra saída durante geração + enviar email de recuperação
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (appStep === "loading-generate") {
         e.preventDefault();
+        const { email, nome } = dataRef.current;
+        if (email) {
+          navigator.sendBeacon(
+            "/api/abandono/loading-exit",
+            new Blob([JSON.stringify({ email, nome })], { type: "application/json" })
+          );
+        }
       }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);

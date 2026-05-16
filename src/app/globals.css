@@ -109,23 +109,17 @@ body {
 /* Wiggle suave para figurinhas */
 @keyframes wiggle {
   0%, 100% { transform: rotate(-8deg) translate3d(0, 0, 0); }
-  25% { transform: rotate(-7.4deg) translate3d(0, -8px, 0); }
-  50% { transform: rotate(-8.4deg) translate3d(0, -12px, 0); }
-  75% { transform: rotate(-7.8deg) translate3d(0, -5px, 0); }
+  50% { transform: rotate(-8deg) translate3d(0, -3px, 0); }
 }
 
 @keyframes wiggle-center {
   0%, 100% { transform: translate3d(0, 0, 0); }
-  25% { transform: translate3d(0, -8px, 0); }
-  50% { transform: translate3d(0, -12px, 0); }
-  75% { transform: translate3d(0, -5px, 0); }
+  50% { transform: translate3d(0, -3px, 0); }
 }
 
 @keyframes wiggle-down {
   0%, 100% { transform: rotate(8deg) translate3d(0, 0, 0); }
-  25% { transform: rotate(7.4deg) translate3d(0, 8px, 0); }
-  50% { transform: rotate(8.4deg) translate3d(0, 12px, 0); }
-  75% { transform: rotate(7.8deg) translate3d(0, 5px, 0); }
+  50% { transform: rotate(8deg) translate3d(0, -3px, 0); }
 }
 
 /* Ocultar widget CartPanda */

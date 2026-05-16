@@ -8,7 +8,7 @@ interface HeroProps {
 
 export default function Hero({ onStart }: HeroProps) {
   return (
-    <section className="flex flex-col items-center min-h-[100dvh] w-full px-5 pt-8 pb-4 text-center overflow-hidden justify-center gap-3 md:justify-between md:gap-0 md:py-4" style={{ background: "#FFDF00" }}>
+    <section className="flex flex-col items-center min-h-[100dvh] w-full px-5 pt-8 pb-4 text-center overflow-hidden justify-center gap-3 md:gap-2 md:py-6" style={{ background: "#FFDF00" }}>
       <h1
         className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] mb-1 max-w-2xl"
         style={{ fontFamily: "var(--font-titulo)" }}
@@ -17,12 +17,12 @@ export default function Hero({ onStart }: HeroProps) {
         <span style={{ color: "#002395" }}>figurinha personalizada</span> da Copa do Mundo
       </h1>
 
-      <div className="relative w-72 h-72 sm:w-80 sm:h-80 md:w-96 md:h-[400px] mb-4 mt-1">
+      <div className="relative w-72 h-72 sm:w-80 sm:h-80 md:w-96 md:h-[340px] mb-6 -mt-3">
         <div
           className="absolute left-0 top-14 md:top-16 w-36 h-52 md:w-48 md:h-72 rounded-xl overflow-hidden shadow-md z-10"
           style={{
             transform: "rotate(-8deg) translateZ(0)",
-            animation: "wiggle 5.5s ease-in-out infinite",
+            animation: "wiggle 4s ease-in-out infinite",
             willChange: "transform",
             backfaceVisibility: "hidden",
           }}
@@ -44,7 +44,7 @@ export default function Hero({ onStart }: HeroProps) {
           className="absolute left-[58%] -translate-x-1/2 top-8 w-44 h-64 md:w-60 md:h-[340px] rounded-xl overflow-hidden shadow-md z-30"
           style={{
             transform: "translateZ(0)",
-            animation: "wiggle-center 5.5s ease-in-out infinite 0.5s",
+            animation: "wiggle-center 4s ease-in-out infinite 0.5s",
             willChange: "transform",
             backfaceVisibility: "hidden",
           }}
@@ -66,7 +66,7 @@ export default function Hero({ onStart }: HeroProps) {
           className="absolute right-0 top-14 md:top-16 w-36 h-52 md:w-48 md:h-72 rounded-xl overflow-hidden shadow-md z-10"
           style={{
             transform: "rotate(8deg) translateZ(0)",
-            animation: "wiggle-down 5.5s ease-in-out infinite 1s",
+            animation: "wiggle-down 4s ease-in-out infinite 1s",
             willChange: "transform",
             backfaceVisibility: "hidden",
           }}
@@ -86,7 +86,7 @@ export default function Hero({ onStart }: HeroProps) {
       </div>
 
       <p
-        className="text-lg md:text-xl max-w-md mb-2 leading-relaxed"
+        className="text-lg md:text-xl max-w-md mb-2 leading-relaxed mt-2 md:mt-5"
         style={{ fontFamily: "var(--font-papernotes)" }}
       >
         Responda algumas perguntas rápidas e veja como criar uma figurinha exclusiva,

@@ -32,6 +32,7 @@ export async function GET() {
     await sql`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS whats_enviado BOOLEAN DEFAULT FALSE`;
     await sql`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS recovery_sent BOOLEAN DEFAULT FALSE`;
     await sql`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS recovery_sent_at TIMESTAMP`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_pedidos_status_email ON pedidos(status, email) WHERE recovery_sent = FALSE`;
 
     await sql`
       CREATE TABLE IF NOT EXISTS pedido_items (

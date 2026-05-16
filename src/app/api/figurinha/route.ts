@@ -18,9 +18,9 @@ let cachedModeloBuffer: Buffer | null = null;
 
 async function getModeloComprimido(): Promise<Buffer> {
   if (cachedModeloBuffer) return cachedModeloBuffer;
-  const modeloPath = join(process.cwd(), "public", "modelo-figurinha.png");
+  const modeloPath = join(process.cwd(), "public", "modelo-figurinha.jpg");
   const modeloBuffer = readFileSync(modeloPath);
-  cachedModeloBuffer = await sharp(modeloBuffer).resize(512).jpeg({ quality: 75 }).toBuffer();
+  cachedModeloBuffer = await sharp(modeloBuffer).resize(512).webp({ quality: 85 }).toBuffer();
   return cachedModeloBuffer;
 }
 
@@ -144,6 +144,27 @@ export async function POST(req: NextRequest) {
     console.log("Retry: nenhuma figurinha pós-erro, gerando nova...");
   }
 
+  // Salvar rascunho antes de gerar — captura quem sai durante o loading
+  let rascunhoId: number | null = null;
+  if (emailSafe) {
+    try {
+      const rows = await sql`
+        INSERT INTO pedidos (nome, data_nascimento, clube, jogador_favorito, email, status)
+        VALUES (${nomeSafe}, ${dataNascimento}, ${clubeSafe}, ${jogadorSafe}, ${emailSafe}, 'gerando')
+        RETURNING id
+      `;
+      rascunhoId = rows[0]?.id ?? null;
+    } catch { /* ignora — não bloqueia a geração */ }
+  }
+
+  // Comprimir foto do usuário antes de enviar pra API (reduz upload)
+  let fotoBufferComprimido: Buffer;
+  try {
+    fotoBufferComprimido = await sharp(fotoBuffer).resize(512).jpeg({ quality: 80 }).toBuffer();
+  } catch {
+    fotoBufferComprimido = fotoBuffer; // fallback: usa original
+  }
+
   const modeloBuffer = await getModeloComprimido();
 
   const nomeUpper = nomeSafe.toUpperCase();
@@ -194,14 +215,14 @@ The result must look like a real printed collectible sticker card with a properl
         }
 
         try {
-          const fotoFile = await toFile(fotoBuffer, "foto.jpg", { type: "image/jpeg" });
-          const modeloFile = await toFile(modeloBuffer, "modelo.jpg", { type: "image/jpeg" });
+          const fotoFile = await toFile(fotoBufferComprimido, "foto.jpg", { type: "image/jpeg" });
+          const modeloFile = await toFile(modeloBuffer, "modelo.webp", { type: "image/webp" });
 
           const response = await openai.images.edit({
             model: "gpt-image-2",
             image: [fotoFile, modeloFile],
             prompt,
-            size: "768x1152",
+            size: "1024x1536",
           });
 
           imageData = response.data?.[0];
@@ -228,52 +249,46 @@ The result must look like a real printed collectible sticker card with a properl
       return NextResponse.json({ error: "Falha na geração" }, { status: 422 });
     }
 
-    // Salvar figurinha no Vercel Blob
+    // Salvar figurinha no Vercel Blob + criar preview em paralelo
     const stickerId = randomUUID();
     const stickerBuffer = Buffer.from(imageData.b64_json, "base64");
-    const blob = await put(`figurinhas/${stickerId}.png`, stickerBuffer, {
-      access: "public",
-      contentType: "image/png",
-    });
 
-    // Criar versão com marca d'água pro preview/email
-    let previewBlobUrl = blob.url; // fallback: usar a original
-    try {
-      const resizedBuf = await sharp(stickerBuffer).resize(400).toBuffer();
-      const resMeta = await sharp(resizedBuf).metadata();
-      const w = resMeta.width || 400;
-      const h = resMeta.height || 600;
-      const watermarkSvg = Buffer.from(`
-      <svg width="${w}" height="${h}">
-        <defs>
-          <pattern id="wm" x="0" y="0" width="200" height="120" patternUnits="userSpaceOnUse" patternTransform="rotate(-30)">
-            <text x="100" y="40" font-family="Arial" font-size="22" fill="rgba(255,255,255,0.45)" font-weight="900" text-anchor="middle">PREVIEW</text>
-            <text x="10" y="70" font-family="Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.3)">minha-figurinha-copa2026</text>
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#wm)" />
-      </svg>
-    `);
-      const previewBuffer = await sharp(resizedBuf)
-        .composite([{ input: watermarkSvg, blend: "over" }])
-        .jpeg({ quality: 60 })
-        .toBuffer();
-      const previewBlob = await put(`previews/${stickerId}.jpg`, previewBuffer, {
-        access: "public",
-        contentType: "image/jpeg",
-      });
-      previewBlobUrl = previewBlob.url;
-    } catch (wmErr) {
-      console.error("Erro ao criar preview com marca dagua:", wmErr);
+    const createPreview = async (): Promise<Buffer | null> => {
+      try {
+        const resizedBuf = await sharp(stickerBuffer).resize(400).toBuffer();
+        const meta = await sharp(resizedBuf).metadata();
+        const w = meta.width || 400;
+        const h = meta.height || 600;
+        const watermarkSvg = Buffer.from(`<svg width="${w}" height="${h}"><defs><pattern id="wm" x="0" y="0" width="200" height="120" patternUnits="userSpaceOnUse" patternTransform="rotate(-30)"><text x="100" y="40" font-family="Arial" font-size="22" fill="rgba(255,255,255,0.45)" font-weight="900" text-anchor="middle">PREVIEW</text><text x="10" y="70" font-family="Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.3)">minha-figurinha-copa2026</text></pattern></defs><rect width="100%" height="100%" fill="url(#wm)"/></svg>`);
+        return await sharp(resizedBuf).composite([{ input: watermarkSvg, blend: "over" }]).jpeg({ quality: 60 }).toBuffer();
+      } catch { return null; }
+    };
+
+    const [blob, previewBuffer] = await Promise.all([
+      put(`figurinhas/${stickerId}.png`, stickerBuffer, { access: "public", contentType: "image/png" }),
+      createPreview(),
+    ]);
+
+    // Salvar preview em paralelo com o blob já salvo
+    const previewBlob = previewBuffer
+      ? await put(`previews/${stickerId}.jpg`, previewBuffer, { access: "public", contentType: "image/jpeg" }).catch(() => null)
+      : null;
+
+    const finalPreviewUrl = previewBlob?.url ?? blob.url;
+
+    // Atualizar rascunho 'gerando' → 'pendente', ou inserir novo se não tem rascunho
+    if (rascunhoId) {
+      sql`UPDATE pedidos SET
+            sticker_id = ${stickerId}, sticker_url = ${blob.url}, preview_url = ${finalPreviewUrl}, status = 'pendente'
+          WHERE id = ${rascunhoId}`
+        .catch(e => console.error("DB update rascunho erro:", e));
+    } else {
+      sql`INSERT INTO pedidos (nome, data_nascimento, clube, jogador_favorito, email, sticker_id, sticker_url, preview_url, status)
+          VALUES (${nomeSafe}, ${dataNascimento}, ${clubeSafe}, ${jogadorSafe}, ${emailSafe}, ${stickerId}, ${blob.url}, ${finalPreviewUrl}, 'pendente')`
+        .catch(e => console.error("DB insert erro:", e));
     }
 
-    // Salvar pedido no banco
-    await sql`
-      INSERT INTO pedidos (nome, data_nascimento, clube, jogador_favorito, peso_estimado, altura_estimada, sticker_id, sticker_url, preview_url, email, status)
-      VALUES (${nomeSafe}, ${dataNascimento}, ${clubeSafe}, ${jogadorSafe}, ${null}, ${null}, ${stickerId}, ${blob.url}, ${previewBlobUrl}, ${emailSafe}, 'pendente')
-    `;
-
-    console.log(`Figurinha salva: ${stickerId}`);
+    console.log(`Figurinha salva: ${stickerId} | preview: ${previewBlob?.url ?? "fallback"}`);
     return NextResponse.json({
       imageBase64: imageData.b64_json,
       mimeType: "image/png",
