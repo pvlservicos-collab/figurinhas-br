@@ -14,15 +14,25 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  let body: { email?: string; sticker_id?: string };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let body: Record<string, any>;
   try { body = await req.json(); } catch {
     return NextResponse.json({ error: "Body inválido" }, { status: 400 });
   }
 
-  const email = body.email?.trim().toLowerCase();
+  // Tenta todos os campos possíveis onde o email pode estar (OnProfit legado, novo, genérico)
+  const emailRaw =
+    body.email ||
+    body.user_email ||
+    body.customer?.email ||
+    body.buyer?.email ||
+    body.order_email ||
+    null;
+  const email = typeof emailRaw === "string" ? emailRaw.trim().toLowerCase() : null;
   if (!email) return NextResponse.json({ error: "email obrigatório" }, { status: 400 });
 
   const sql = getDb();
+  const stickerId = body.sticker_id || body.order_src || body.src;
 
   // Busca pedido pendente com figurinha, sem recovery enviado
   const rows = await sql`
@@ -31,7 +41,7 @@ export async function POST(req: NextRequest) {
       AND status = 'pendente'
       AND sticker_url IS NOT NULL
       AND recovery_sent = FALSE
-      ${body.sticker_id ? sql`AND sticker_id = ${body.sticker_id}` : sql``}
+      ${stickerId ? sql`AND sticker_id = ${stickerId}` : sql``}
     ORDER BY created_at DESC LIMIT 1
   `.catch(() => []);
 

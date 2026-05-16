@@ -140,6 +140,7 @@ async function generatePosterA2(stickerUrl: string, stickerId: string): Promise<
   return posterBlob.url;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function sendEmailViaGmail(to: string, customerName: string, pdfUrl: string) {
   const scriptUrl = process.env.GMAIL_SCRIPT_URL;
   if (!scriptUrl) throw new Error("GMAIL_SCRIPT_URL não configurada");
@@ -256,10 +257,16 @@ export async function POST(req: NextRequest) {
 
   const sql = getDb();
 
-  console.log("Webhook Onprofit recebido:", payload.id, payload.status);
+  // OnProfit tem dois formatos: "confirmação" (status/customer) e "recuperação" (order_status/user_*)
+  const isNovo = payload.status === "PAID";
+  const isLegado = payload.order_status === "approved";
 
-  // Fix 1: Idempotência — evitar processar mesmo webhook 2x
-  const idempotencyKey = `onprofit-${payload.id}-${payload.status}-${payload.item_type || "product"}-${payload.product?.name || ""}`;
+  const orderId = isNovo ? payload.id : payload.order_id;
+  const statusRaw = isNovo ? payload.status : payload.order_status;
+  console.log("Webhook Onprofit recebido:", orderId, statusRaw, isNovo ? "formato-novo" : "formato-legado");
+
+  // Idempotência — evitar processar mesmo webhook 2x
+  const idempotencyKey = `onprofit-${orderId}-${statusRaw}`;
   const alreadyProcessed = await sql`SELECT 1 FROM webhook_processed WHERE idempotency_key = ${idempotencyKey}`.catch(() => []);
   if (alreadyProcessed.length > 0) {
     console.log(`Webhook duplicado ignorado: ${idempotencyKey}`);
@@ -268,22 +275,25 @@ export async function POST(req: NextRequest) {
   await sql`INSERT INTO webhook_processed (idempotency_key) VALUES (${idempotencyKey}) ON CONFLICT DO NOTHING`.catch(() => {});
 
   // Só processa pagamentos confirmados
-  if (payload.status !== "PAID") {
-    console.log(`Status ${payload.status} ignorado.`);
+  if (!isNovo && !isLegado) {
+    console.log(`Status ${statusRaw} ignorado.`);
     return NextResponse.json({ ok: true, message: "Status ignorado" });
   }
 
-  const customerEmail = payload.customer?.email;
-  const rawName = `${payload.customer?.name || ""} ${payload.customer?.lastname || ""}`.trim();
+  const customerEmail = isNovo ? payload.customer?.email : payload.user_email;
+  const rawName = isNovo
+    ? `${payload.customer?.name || ""} ${payload.customer?.lastname || ""}`.trim()
+    : `${payload.user_name || ""} ${payload.user_lastname || ""}`.trim();
   const customerName = rawName.replace(/[<>"'&]/g, "");
-  const customerPhone = payload.customer?.cell || payload.customer?.phone || null;
-  const stickerId = payload.src;
-  const orderId = payload.id;
-  const itemType = payload.item_type; // "product" ou "order_bump"
-  const offerHash = payload.offer_hash;
-  const offerName = payload.offer_name;
-  const price = payload.price;
-  const productName = payload.product?.name;
+  const customerPhone = isNovo
+    ? (payload.customer?.cell || payload.customer?.phone || null)
+    : (payload.user_cell_no_formatted || payload.user_cell || null);
+  const stickerId = isNovo ? payload.src : payload.order_src;
+  const itemType = payload.item_type || "product";
+  const offerHash = isNovo ? payload.offer_hash : payload.order_off;
+  const offerName = isNovo ? payload.offer_name : payload.order_off_name;
+  const price = isNovo ? payload.price : payload.order_price;
+  const productName = isNovo ? payload.product?.name : payload.course?.course_name;
 
   if (!customerEmail) {
     console.error("Webhook sem email do cliente");
