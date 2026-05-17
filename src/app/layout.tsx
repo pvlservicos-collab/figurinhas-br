@@ -32,12 +32,10 @@ export default function RootLayout({
           src="https://cdn.utmify.com.br/scripts/utms/latest.js"
           data-utmify-prevent-xcod-sck=""
           data-utmify-prevent-subids=""
-          data-utmify-ignore-iframe=""
-          data-utmify-is-cartpanda=""
           strategy="afterInteractive"
         />
         <Script id="utmify-pixel" strategy="afterInteractive">{`
-          window.pixelId = "6a0653073ac32b2418844574";
+          window.pixelId = "6a0a1b0553556915bb7cb5be";
           var a = document.createElement("script");
           a.setAttribute("async", "");
           a.setAttribute("defer", "");
