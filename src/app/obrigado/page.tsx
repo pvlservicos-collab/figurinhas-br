@@ -153,7 +153,7 @@ export default function Obrigado() {
               <div className="bg-white rounded-2xl p-4 border-2 border-copa-blue flex items-start gap-3">
                 <span className="text-2xl">📧</span>
                 <p className="text-base text-left" style={{ fontFamily: "var(--font-papernotes)" }}>
-                  <strong className="text-copa-blue">Por e-mail</strong> — em até <strong>30 minutos</strong> você recebe o arquivo pronto para impressão.
+                  <strong className="text-copa-blue">Por e-mail</strong> — em até <strong>30 minutos</strong> você recebe o arquivo. <strong>(Cheque na caixa de entrada e na ABA SPAM)</strong>
                 </p>
               </div>
               <div className="bg-white rounded-2xl p-4 border-2 border-copa-blue flex items-start gap-3">
