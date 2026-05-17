@@ -6,10 +6,12 @@ interface ResultScreenProps {
   stickerUrl: string;
   stickerId: string;
   onRetry: () => void;
+  onCheckout?: () => void;
 }
 
-export default function ResultScreen({ stickerUrl, stickerId, onRetry }: ResultScreenProps) {
+export default function ResultScreen({ stickerUrl, stickerId, onRetry, onCheckout }: ResultScreenProps) {
   const handleCheckout = () => {
+    onCheckout?.();
     sessionStorage.removeItem("figurinha_sticker_url");
     sessionStorage.removeItem("figurinha_sticker_id");
     try { localStorage.setItem("figurinha_sticker_id", stickerId); } catch { /* ignore */ }

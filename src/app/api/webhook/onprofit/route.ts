@@ -609,7 +609,7 @@ export async function POST(req: NextRequest) {
 
     // Enviar email via módulo centralizado (Hostinger → Gmail → Resend)
     console.log(`Enviando email para ${customerEmail}...`);
-    const emailEnviado = await sendEmail(customerEmail, customerName, stickerBytes, pdfBuffer, pdfBlob.url);
+    const emailEnviado = await sendEmail(customerEmail, customerName, stickerBytes, pdfBuffer, pdfBlob.url, stickerUrl);
 
     // Só marca entregue se o email foi enviado
     await sql`

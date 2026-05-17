@@ -3,18 +3,28 @@
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://gerarfigurinhas.vercel.app";
 
-function buildEmailHtml(customerName: string, pdfUrl?: string): string {
-  const dlLink = pdfUrl ? `${APP_URL}/api/download?url=${encodeURIComponent(pdfUrl)}&name=figurinha-copa-2026` : "";
-  return `<div style="font-family:Arial;max-width:600px;margin:0 auto;padding:20px">
-    <h1 style="color:#1E3A8A;text-align:center">GOOLL! ⚽</h1>
-    <p style="font-size:18px;text-align:center">Ola <b>${customerName}</b>!</p>
-    <p style="font-size:16px;text-align:center">Sua figurinha personalizada da Copa do Mundo 2026 esta pronta!</p>
-    ${dlLink ? `<div style="text-align:center;margin:20px 0"><a href="${dlLink}" style="display:inline-block;background:#009739;color:white;font-weight:bold;font-size:18px;padding:16px 40px;border-radius:12px;text-decoration:none">BAIXAR FIGURINHA (PDF)</a></div>` : ""}
-    <p style="font-size:14px;color:#666;text-align:center">Em anexo voce encontra a figurinha avulsa (PNG) e o PDF para impressao.</p>
-    <hr style="border:1px solid #FFD700;margin:20px 0"/>
-    <p style="font-size:16px;text-align:center">Conhece alguem que ia amar ter uma figurinha personalizada?</p>
-    <div style="text-align:center;margin:12px 0"><a href="${APP_URL}/" style="display:inline-block;background:#1E3A8A;color:white;font-weight:bold;padding:14px 32px;border-radius:12px;text-decoration:none">CRIAR NOVA FIGURINHA</a></div>
-  </div>`;
+function buildEmailHtml(customerName: string, pdfUrl?: string, stickerUrl?: string): string {
+  const dlPng = stickerUrl ? `${APP_URL}/api/download?url=${encodeURIComponent(stickerUrl)}&name=minha-figurinha-copa2026.png` : "";
+  const dlPdf = pdfUrl ? `${APP_URL}/api/download?url=${encodeURIComponent(pdfUrl)}&name=figurinhas-impressao-copa2026.pdf` : "";
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;padding:0;background:#f4f4f4;">
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;border-radius:8px;overflow:hidden;padding:32px;">
+      <h1 style="color:#000000;font-size:32px;margin:0 0 8px 0;text-align:center;">SUA FIGURINHA CHEGOOOL!⚽</h1>
+      <p style="font-size:18px;color:#000000;margin:0 0 8px 0;text-align:center;">Ola, <strong>${customerName}</strong>!</p>
+      <p style="font-size:16px;color:#000000;margin:0 0 24px 0;text-align:center;">Sua figurinha personalizada da Copa do Mundo 2026 esta pronta!</p>
+      <div style="text-align:center;margin-bottom:12px;">
+        ${dlPng ? `<a href="${dlPng}" style="display:inline-block;background:#000000;color:#ffffff;font-weight:bold;font-size:16px;padding:14px 36px;border-radius:8px;text-decoration:none;letter-spacing:1px;margin-bottom:12px;">BAIXAR FIGURINHA</a>` : ""}
+      </div>
+      <div style="text-align:center;margin-bottom:24px;">
+        ${dlPdf ? `<a href="${dlPdf}" style="display:inline-block;background:#ffffff;color:#000000;font-weight:bold;font-size:16px;padding:14px 36px;border-radius:8px;text-decoration:none;letter-spacing:1px;border:2px solid #000000;">BAIXAR PDF PARA IMPRESSÃO</a>` : ""}
+      </div>
+      <hr style="border:none;border-top:1px solid #e0e0e0;margin:20px 0;"/>
+      <p style="font-size:15px;color:#000000;margin:0 0 16px 0;text-align:center;">Conhece alguem que ia amar ter uma figurinha personalizada?</p>
+      <div style="text-align:center;">
+        <a href="${APP_URL}/" style="display:inline-block;background:#000000;color:#ffffff;font-weight:bold;font-size:14px;padding:12px 28px;border-radius:8px;text-decoration:none;">CRIAR NOVA FIGURINHA</a>
+      </div>
+      <p style="font-size:12px;color:#999999;margin:24px 0 0 0;text-align:center;">Figurinha Copa 2026 — Arquivo digital para impressao.</p>
+    </div>
+  </body></html>`;
 }
 
 export async function sendEmail(
@@ -22,11 +32,12 @@ export async function sendEmail(
   customerName: string,
   stickerBytes: Uint8Array,
   pdfBuffer: Buffer,
-  pdfUrl?: string
+  pdfUrl?: string,
+  stickerUrl?: string
 ): Promise<boolean> {
   const fileNameBase = customerName.toLowerCase().replace(/\s+/g, "-");
   const subject = "Sua Figurinha da Copa 2026 esta pronta! ⚽";
-  const html = buildEmailHtml(customerName, pdfUrl);
+  const html = buildEmailHtml(customerName, pdfUrl, stickerUrl);
 
   // 1. Hostinger SMTP (principal — domínio próprio, sem spam)
   if (process.env.HOSTINGER_SMTP_HOST && process.env.HOSTINGER_SMTP_USER) {
