@@ -1,7 +1,6 @@
 // Utilitário compartilhado de e-mails de abandono de carrinho
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://gerarfigurinhas.vercel.app";
-const CHECKOUT_URL = process.env.NEXT_PUBLIC_CHECKOUT_URL || "https://pay.onprofit.com.br/5Sh0FbF4?off=3wCdRS";
 
 function htmlLoading(nome: string): string {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>
@@ -79,24 +78,20 @@ export async function enviarEmailAbandono(params: {
     ? `Sua figurinha da Copa ficou pelo caminho, ${nome.split(" ")[0]}!`
     : `A figurinha de ${nome} está prestes a ser excluída!`;
 
-  // 1. Hostinger SMTP (se configurado)
-  if (process.env.HOSTINGER_SMTP_HOST && process.env.HOSTINGER_SMTP_USER) {
+  // 1. Resend (domínio verificado — principal)
+  if (process.env.RESEND_API_KEY) {
     try {
-      const nodemailer = (await import("nodemailer")).default;
-      const t = nodemailer.createTransport({
-        host: process.env.HOSTINGER_SMTP_HOST,
-        port: Number(process.env.HOSTINGER_SMTP_PORT) || 465,
-        secure: true,
-        auth: { user: process.env.HOSTINGER_SMTP_USER, pass: process.env.HOSTINGER_SMTP_PASS },
-      });
-      await t.sendMail({ from: `Figurinha Copa 2026 <${process.env.HOSTINGER_SMTP_USER}>`, to: email, subject, html });
+      const { Resend } = await import("resend");
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      const from = process.env.RESEND_FROM || "Figurinha Copa 2026 <onboarding@resend.dev>";
+      await resend.emails.send({ from, to: email, subject, html });
       return true;
     } catch (err) {
-      console.error("Hostinger abandono falhou:", err instanceof Error ? err.message : err);
+      console.error("Resend abandono falhou:", err instanceof Error ? err.message : err);
     }
   }
 
-  // 2. Gmail SMTP (app password — sem domínio necessário)
+  // 2. Gmail SMTP (fallback)
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
     try {
       const nodemailer = (await import("nodemailer")).default;
@@ -108,19 +103,6 @@ export async function enviarEmailAbandono(params: {
       return true;
     } catch (err) {
       console.error("Gmail abandono falhou:", err instanceof Error ? err.message : err);
-    }
-  }
-
-  // 3. Resend (fallback, requer domínio verificado em produção)
-  if (process.env.RESEND_API_KEY) {
-    try {
-      const { Resend } = await import("resend");
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      const from = process.env.RESEND_FROM || "onboarding@resend.dev";
-      await resend.emails.send({ from, to: email, subject, html });
-      return true;
-    } catch (err) {
-      console.error("Resend abandono falhou:", err instanceof Error ? err.message : err);
     }
   }
 
