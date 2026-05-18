@@ -27,6 +27,27 @@ interface Stats {
   entregues: number;
 }
 
+interface FunilData {
+  funnel: { step: string; count: number }[];
+  leads: { session_id: string; email: string; nome: string | null; step: string; updated_at: string }[];
+  pagos: number;
+}
+
+const FUNNEL_STEPS = [
+  { key: "quiz_1", label: "Iniciou quiz", color: "text-white" },
+  { key: "quiz_2", label: "Etapa 2", color: "text-blue-300" },
+  { key: "quiz_3", label: "Etapa 3", color: "text-blue-400" },
+  { key: "loading", label: "Gerou figurinha", color: "text-yellow-400" },
+  { key: "result_ok", label: "Viu preview", color: "text-orange-400" },
+  { key: "checkout", label: "Clicou checkout", color: "text-purple-400" },
+  { key: "pago", label: "Pagou", color: "text-green-400" },
+];
+
+const STEP_LABEL: Record<string, string> = {
+  quiz_1: "Iniciou quiz", quiz_2: "Etapa 2", quiz_3: "Etapa 3",
+  loading: "Gerou figurinha", result_ok: "Viu preview", result_error: "Erro geração", checkout: "Clicou checkout",
+};
+
 export default function AdminDashboard() {
   const [token, setToken] = useState("");
   const [authenticated, setAuthenticated] = useState(false);
@@ -42,9 +63,18 @@ export default function AdminDashboard() {
   const [resendEmail, setResendEmail] = useState("");
   const [resendPedidoId, setResendPedidoId] = useState<number | null>(null);
   const [resendStatus, setResendStatus] = useState("");
+  const [funil, setFunil] = useState<FunilData | null>(null);
+  const [funilTab, setFunilTab] = useState<"funil" | "leads">("funil");
 
   const pedidosRef = useRef(pedidos);
   pedidosRef.current = pedidos;
+
+  const fetchFunil = useCallback(async (t: string) => {
+    try {
+      const res = await fetch("/api/admin/funil", { headers: { Authorization: `Bearer ${t}` } });
+      if (res.ok) setFunil(await res.json());
+    } catch { /* ignora */ }
+  }, []);
 
   const fetchPedidos = useCallback(async (t: string, searchTerm = "", append = false) => {
     if (!append) setLoading(true);
@@ -83,10 +113,10 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const saved = localStorage.getItem("admin_token");
-    if (saved) { setToken(saved); fetchPedidos(saved); }
-  }, [fetchPedidos]);
+    if (saved) { setToken(saved); fetchPedidos(saved); fetchFunil(saved); }
+  }, [fetchPedidos, fetchFunil]);
 
-  const handleLogin = (e: React.FormEvent) => { e.preventDefault(); fetchPedidos(token); };
+  const handleLogin = (e: React.FormEvent) => { e.preventDefault(); fetchPedidos(token); fetchFunil(token); };
 
   // Debounce pesquisa — busca no banco após 500ms sem digitar
   useEffect(() => {
@@ -275,6 +305,61 @@ export default function AdminDashboard() {
             <p className="text-gray-400 text-sm">Entregues</p>
           </div>
         </div>
+
+        {/* Funil */}
+        {funil && (
+          <div className="bg-gray-800 rounded-xl p-5 mb-6">
+            <div className="flex items-center gap-4 mb-4">
+              <h2 className="text-lg font-bold">Funil de conversão</h2>
+              <button onClick={() => setFunilTab("funil")} className={`text-sm px-3 py-1 rounded-lg cursor-pointer ${funilTab === "funil" ? "bg-blue-600" : "bg-gray-700 hover:bg-gray-600"}`}>Funil</button>
+              <button onClick={() => setFunilTab("leads")} className={`text-sm px-3 py-1 rounded-lg cursor-pointer ${funilTab === "leads" ? "bg-blue-600" : "bg-gray-700 hover:bg-gray-600"}`}>Leads ({funil.leads.length})</button>
+              {funilTab === "leads" && (
+                <button onClick={() => {
+                  const rows = [["Email","Nome","Etapa","Data"].join(","), ...funil.leads.map(l => [l.email, l.nome || "", STEP_LABEL[l.step] || l.step, new Date(l.updated_at).toLocaleString("pt-BR")].map(v => `"${v}"`).join(","))];
+                  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["\uFEFF" + rows.join("\n")], { type: "text/csv;charset=utf-8;" })); a.download = "leads.csv"; a.click();
+                }} className="ml-auto text-sm bg-green-700 hover:bg-green-600 px-3 py-1 rounded-lg cursor-pointer">
+                  Exportar CSV
+                </button>
+              )}
+            </div>
+            {funilTab === "funil" ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+                {FUNNEL_STEPS.map(({ key, label, color }) => {
+                  const count = funil.funnel.find(f => f.step === key)?.count ?? (key === "pago" ? funil.pagos : 0);
+                  return (
+                    <div key={key} className="bg-gray-700 rounded-lg p-4 text-center">
+                      <p className={`text-2xl font-bold ${color}`}>{count}</p>
+                      <p className="text-gray-400 text-xs mt-1">{label}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="overflow-x-auto max-h-80 overflow-y-auto">
+                <table className="w-full text-sm min-w-[400px]">
+                  <thead className="sticky top-0 bg-gray-800">
+                    <tr className="text-gray-400 text-left text-xs">
+                      <th className="pb-2 pr-4">Email</th>
+                      <th className="pb-2 pr-4">Nome</th>
+                      <th className="pb-2 pr-4">Etapa</th>
+                      <th className="pb-2">Data</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {funil.leads.map(l => (
+                      <tr key={l.session_id} className="border-t border-gray-700/50 text-xs">
+                        <td className="py-2 pr-4 text-gray-300">{l.email}</td>
+                        <td className="py-2 pr-4 text-gray-400">{l.nome || "—"}</td>
+                        <td className="py-2 pr-4"><span className="bg-gray-600 px-2 py-0.5 rounded text-gray-200">{STEP_LABEL[l.step] || l.step}</span></td>
+                        <td className="py-2 text-gray-500">{new Date(l.updated_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Busca */}
         <div className="mb-4">

@@ -61,6 +61,17 @@ export default function Home() {
   const [genStartTime, setGenStartTime] = useState(0);
   const dataRef = useRef(data);
   dataRef.current = data;
+  const sessionRef = useRef<string>("");
+
+  // Session ID para tracking do funil
+  useEffect(() => {
+    let sid = sessionStorage.getItem("_fsid");
+    if (!sid) {
+      sid = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      sessionStorage.setItem("_fsid", sid);
+    }
+    sessionRef.current = sid;
+  }, []);
 
   // Salvar UTMs da URL na chegada pra usar no checkout depois
   useEffect(() => {
@@ -73,6 +84,27 @@ export default function Home() {
       }
     }
   }, []);
+
+  // Tracking de funil (fire-and-forget)
+  useEffect(() => {
+    const stepMap: Partial<Record<AppStep, string>> = {
+      "quiz-1": "quiz_1",
+      "quiz-2": "quiz_2",
+      "quiz-3": "quiz_3",
+      "loading-generate": "loading",
+      "result": stickerUrl ? "result_ok" : "result_error",
+    };
+    const s = stepMap[appStep];
+    if (!s || !sessionRef.current) return;
+    const { email, nome } = dataRef.current;
+    navigator.sendBeacon(
+      "/api/track",
+      new Blob(
+        [JSON.stringify({ session_id: sessionRef.current, step: s, email: email || undefined, nome: nome || undefined })],
+        { type: "application/json" }
+      )
+    );
+  }, [appStep, stickerUrl]);
 
   // Proteger contra saída durante geração + enviar email de recuperação
   useEffect(() => {

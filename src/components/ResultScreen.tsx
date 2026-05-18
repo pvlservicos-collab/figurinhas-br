@@ -12,6 +12,10 @@ interface ResultScreenProps {
 export default function ResultScreen({ stickerUrl, stickerId, onRetry, onCheckout }: ResultScreenProps) {
   const handleCheckout = () => {
     onCheckout?.();
+    try {
+      const sid = sessionStorage.getItem("_fsid");
+      if (sid) navigator.sendBeacon("/api/track", new Blob([JSON.stringify({ session_id: sid, step: "checkout" })], { type: "application/json" }));
+    } catch { /* ignora */ }
     sessionStorage.removeItem("figurinha_sticker_url");
     sessionStorage.removeItem("figurinha_sticker_id");
     try { localStorage.setItem("figurinha_sticker_id", stickerId); } catch { /* ignore */ }

@@ -63,6 +63,21 @@ export async function GET() {
       )
     `;
 
+    await sql`
+      CREATE TABLE IF NOT EXISTS sessions (
+        id SERIAL PRIMARY KEY,
+        session_id VARCHAR(100) UNIQUE NOT NULL,
+        email VARCHAR(255),
+        nome VARCHAR(100),
+        step VARCHAR(50) NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `;
+    await sql`CREATE INDEX IF NOT EXISTS idx_sessions_email ON sessions(email)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_sessions_step ON sessions(step)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_sessions_updated ON sessions(updated_at)`;
+
     // Tabela de idempotência pra webhooks
     await sql`
       CREATE TABLE IF NOT EXISTS webhook_processed (
