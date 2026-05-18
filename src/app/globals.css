@@ -26,9 +26,14 @@
   font-display: swap;
 }
 
+/* Aplica maiúsculo em todos os elementos com font-titulo */
+[style*="--font-titulo"] {
+  text-transform: uppercase;
+}
+
 @theme inline {
   --font-papernotes: 'Papernotes', cursive;
-  --font-titulo: 'CBF', sans-serif;
+  --font-titulo: 'Anton', sans-serif;
   --color-copa-yellow: #ED2939;
   --color-copa-yellow-light: #FDDCDF;
   --color-copa-blue: #002395;

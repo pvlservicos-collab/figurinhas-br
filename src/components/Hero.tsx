@@ -10,7 +10,7 @@ export default function Hero({ onStart }: HeroProps) {
   return (
     <section className="flex flex-col items-center min-h-[100dvh] w-full px-5 pt-8 pb-4 text-center overflow-hidden justify-center gap-3 md:gap-2 md:py-6" style={{ background: "#FFDF00" }}>
       <h1
-        className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] mb-1 max-w-2xl"
+        className="text-[2.85rem] sm:text-[2.85rem] md:text-[3.42rem] lg:text-[3.42rem] font-normal leading-[1.32] mb-1 w-full max-w-2xl"
         style={{ fontFamily: "var(--font-titulo)" }}
       >
         Transforme seu filho em uma{" "}
