@@ -23,10 +23,21 @@ export default function RootLayout({
     <html lang="pt-BR" className="h-full antialiased">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        {/* Preconnect para recursos críticos */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://cdn.utmify.com.br" />
+        {/* Anton font — display=swap evita bloqueio de renderização */}
         <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet" />
-        <script type="text/javascript" src="https://assets.mycartpanda.com/cartx-ecomm-ui-assets/js/cpsales.js"></script>
       </head>
       <body className="min-h-full flex flex-col">
+        {children}
+        {/* CartPanda — lazyOnload não bloqueia renderização */}
+        <Script
+          id="cartpanda"
+          src="https://assets.mycartpanda.com/cartx-ecomm-ui-assets/js/cpsales.js"
+          strategy="lazyOnload"
+        />
         <Script
           id="utmify-utms"
           src="https://cdn.utmify.com.br/scripts/utms/latest.js"
@@ -42,7 +53,6 @@ export default function RootLayout({
           a.setAttribute("src", "https://cdn.utmify.com.br/scripts/pixel/pixel.js");
           document.head.appendChild(a);
         `}</Script>
-        {children}
       </body>
     </html>
   );
