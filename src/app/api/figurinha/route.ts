@@ -230,7 +230,7 @@ The result must look like a real printed collectible sticker card with a properl
         } catch (apiErr: unknown) {
           const errMsg = apiErr instanceof Error ? apiErr.message : String(apiErr);
           // 429 = rate limit, 402 = sem créditos → tenta próxima key
-          if (errMsg.includes("429") || errMsg.includes("rate") || errMsg.includes("402") || errMsg.includes("insufficient")) {
+          if (errMsg.includes("429") || errMsg.includes("rate") || errMsg.includes("402") || errMsg.includes("insufficient") || errMsg.includes("billing") || errMsg.includes("Billing") || errMsg.includes("quota") || errMsg.includes("credit")) {
             console.log(`OpenAI key ${keyIdx + 1} erro (${errMsg.includes("402") ? "sem creditos" : "rate limit"}) tentativa ${attempt + 1}`);
             if (attempt === 2) break; // Sai do retry, tenta próxima key
             continue;
