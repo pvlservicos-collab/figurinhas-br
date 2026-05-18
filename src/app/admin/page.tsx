@@ -46,18 +46,24 @@ interface FunilData {
 }
 
 const FUNNEL_STEPS = [
-  { key: "quiz_1", label: "Iniciou quiz", color: "text-white" },
-  { key: "quiz_2", label: "Etapa 2", color: "text-blue-300" },
-  { key: "quiz_3", label: "Etapa 3", color: "text-blue-400" },
-  { key: "loading", label: "Gerou figurinha", color: "text-yellow-400" },
-  { key: "result_ok", label: "Viu preview", color: "text-orange-400" },
-  { key: "checkout", label: "Clicou checkout", color: "text-purple-400" },
+  { key: "quiz_1", label: "Card 1 (nome/foto)", color: "text-white" },
+  { key: "quiz_2", label: "Card 2 (clube)", color: "text-blue-300" },
+  { key: "quiz_3", label: "Card 3 (email)", color: "text-blue-400" },
+  { key: "loading", label: "Gerando figurinha", color: "text-yellow-400" },
+  { key: "result_ok", label: "Viu preview c/ preço", color: "text-orange-400" },
+  { key: "checkout", label: "Clicou em comprar", color: "text-purple-400" },
   { key: "pago", label: "Pagou", color: "text-green-400" },
 ];
 
 const STEP_LABEL: Record<string, string> = {
-  quiz_1: "Iniciou quiz", quiz_2: "Etapa 2", quiz_3: "Etapa 3",
-  loading: "Gerou figurinha", result_ok: "Viu preview", result_error: "Erro geração", checkout: "Clicou checkout",
+  quiz_1: "Card 1 — Nome/foto",
+  quiz_2: "Card 2 — Clube",
+  quiz_3: "Card 3 — Email",
+  loading: "Gerando figurinha",
+  result_ok: "Viu preview c/ preço",
+  result_error: "Erro na geração",
+  checkout: "Clicou em comprar",
+  obrigado: "Comprou ✓",
 };
 
 export default function AdminDashboard() {
@@ -487,14 +493,12 @@ export default function AdminDashboard() {
         <div className="bg-gray-800 rounded-xl p-5 mt-6">
           <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">Legenda de status</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-            <div className="flex items-center gap-2"><span className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded text-xs font-bold">pendente</span><span className="text-gray-400">Gerou a figurinha mas ainda não pagou</span></div>
+            <div className="flex items-center gap-2"><span className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded text-xs font-bold">pendente</span><span className="text-gray-400">Gerou a figurinha — ainda não clicou em comprar</span></div>
+            <div className="flex items-center gap-2"><span className="bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded text-xs font-bold">CTA: Clicou</span><span className="text-gray-400">Clicou no botão de compra na tela com o preço</span></div>
             <div className="flex items-center gap-2"><span className="bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded text-xs font-bold">pago</span><span className="text-gray-400">Pagou — aguardando entrega do arquivo</span></div>
             <div className="flex items-center gap-2"><span className="bg-green-500/20 text-green-400 border border-green-500/30 px-2 py-0.5 rounded text-xs font-bold">entregue</span><span className="text-gray-400">Email com a figurinha enviado com sucesso</span></div>
-            <div className="flex items-center gap-2"><span className="bg-gray-500/20 text-gray-400 border border-gray-500/30 px-2 py-0.5 rounded text-xs font-bold">recuperado</span><span className="text-gray-400">Veio de email de recuperação de abandono</span></div>
-          </div>
-          <div className="border-t border-gray-700 mt-3 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-            <div className="flex items-center gap-2"><span className="bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded text-xs font-bold">CTA: Clicou</span><span className="text-gray-400">Clicou no botão "Receber minha figurinha" (checkout)</span></div>
-            <div className="flex items-center gap-2"><span className="text-xs text-gray-400">Etapas do funil:</span><span className="text-gray-400">Quiz 1→2→3 → Gerou → Viu preview → Checkout → Pagou</span></div>
+            <div className="flex items-center gap-2"><span className="bg-gray-500/20 text-gray-400 border border-gray-500/30 px-2 py-0.5 rounded text-xs font-bold">recuperado</span><span className="text-gray-400">Veio por email de recuperação de abandono</span></div>
+            <div className="flex items-center gap-2"><span className="text-xs font-bold text-green-400">Obrigado ✓</span><span className="text-gray-400">Chegou na página de obrigado — confirma pagamento</span></div>
           </div>
         </div>
 
