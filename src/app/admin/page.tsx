@@ -60,7 +60,7 @@ export default function AdminDashboard() {
   const [resendEmail, setResendEmail] = useState("");
   const [resendPedidoId, setResendPedidoId] = useState<number | null>(null);
   const [resendStatus, setResendStatus] = useState("");
-  const [funil, setFunil] = useState<FunilData | null>(null);
+  const [funil, setFunil] = useState<FunilData>({ funnel: [], leads: [], pagos: 0 });
   const [funilTab, setFunilTab] = useState<"funil" | "leads">("funil");
 
   const pedidosRef = useRef(pedidos);
@@ -245,7 +245,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Funil */}
-        {funil && (() => {
+        {(() => {
           const stepCounts = FUNNEL_STEPS.map(({ key }) => ({
             key,
             count: key === "pago" ? funil.pagos : (funil.funnel.find(f => f.step === key)?.count ?? 0),
