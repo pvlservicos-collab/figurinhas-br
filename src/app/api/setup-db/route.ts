@@ -74,6 +74,8 @@ export async function GET() {
         updated_at TIMESTAMP DEFAULT NOW()
       )
     `;
+    await sql`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS cta_clicked BOOLEAN DEFAULT FALSE`;
+    await sql`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS obrigado BOOLEAN DEFAULT FALSE`;
     await sql`CREATE INDEX IF NOT EXISTS idx_sessions_email ON sessions(email)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_sessions_step ON sessions(step)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_sessions_updated ON sessions(updated_at)`;

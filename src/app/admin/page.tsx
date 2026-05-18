@@ -27,10 +27,22 @@ interface Stats {
   entregues: number;
 }
 
+interface Lead {
+  session_id: string;
+  email: string;
+  nome: string | null;
+  step: string;
+  updated_at: string;
+  telefone: string | null;
+  cta_clicked: boolean;
+  obrigado: boolean;
+}
+
 interface FunilData {
   funnel: { step: string; count: number }[];
-  leads: { session_id: string; email: string; nome: string | null; step: string; updated_at: string; telefone: string | null }[];
+  leads: Lead[];
   pagos: number;
+  obrigados: { session_id: string; email: string; nome: string | null; updated_at: string; telefone: string | null }[];
 }
 
 const FUNNEL_STEPS = [
@@ -60,7 +72,7 @@ export default function AdminDashboard() {
   const [resendEmail, setResendEmail] = useState("");
   const [resendPedidoId, setResendPedidoId] = useState<number | null>(null);
   const [resendStatus, setResendStatus] = useState("");
-  const [funil, setFunil] = useState<FunilData>({ funnel: [], leads: [], pagos: 0 });
+  const [funil, setFunil] = useState<FunilData>({ funnel: [], leads: [], pagos: 0, obrigados: [] });
   const [funilTab, setFunilTab] = useState<"funil" | "leads">("funil");
 
   const pedidosRef = useRef(pedidos);
@@ -197,6 +209,11 @@ export default function AdminDashboard() {
     } catch { /* ignora */ }
   };
 
+  const deleteLead = async (session_id: string) => {
+    await fetch("/api/track", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id }) });
+    fetchFunil();
+  };
+
   const formatDate = (d: string | null) => {
     if (!d) return "—";
     return new Date(d).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -319,7 +336,9 @@ export default function AdminDashboard() {
                         <th className="pb-2 pr-4 py-2">Email</th>
                         <th className="pb-2 pr-4 py-2">Telefone</th>
                         <th className="pb-2 pr-4 py-2">Etapa</th>
-                        <th className="pb-2 py-2">Data</th>
+                        <th className="pb-2 pr-4 py-2">CTA</th>
+                        <th className="pb-2 pr-4 py-2">Data</th>
+                        <th className="pb-2 py-2"></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -333,7 +352,15 @@ export default function AdminDashboard() {
                               : <span className="text-gray-600">—</span>}
                           </td>
                           <td className="py-2 pr-4"><span className="bg-gray-600 px-2 py-0.5 rounded text-gray-200">{STEP_LABEL[l.step] || l.step}</span></td>
-                          <td className="py-2 text-gray-500">{new Date(l.updated_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</td>
+                          <td className="py-2 pr-4">
+                            {l.cta_clicked
+                              ? <span className="bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded font-bold">Clicou</span>
+                              : <span className="text-gray-600">—</span>}
+                          </td>
+                          <td className="py-2 pr-4 text-gray-500">{new Date(l.updated_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</td>
+                          <td className="py-2">
+                            <button onClick={() => deleteLead(l.session_id)} className="text-gray-600 hover:text-red-400 transition-colors cursor-pointer text-base leading-none">✕</button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -455,6 +482,56 @@ export default function AdminDashboard() {
             {loadingMore ? "Carregando..." : `Ver mais (${pedidos.length} exibidos)`}
           </button>
         )}
+
+        {/* Legenda de status */}
+        <div className="bg-gray-800 rounded-xl p-5 mt-6">
+          <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">Legenda de status</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+            <div className="flex items-center gap-2"><span className="bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-2 py-0.5 rounded text-xs font-bold">pendente</span><span className="text-gray-400">Gerou a figurinha mas ainda não pagou</span></div>
+            <div className="flex items-center gap-2"><span className="bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded text-xs font-bold">pago</span><span className="text-gray-400">Pagou — aguardando entrega do arquivo</span></div>
+            <div className="flex items-center gap-2"><span className="bg-green-500/20 text-green-400 border border-green-500/30 px-2 py-0.5 rounded text-xs font-bold">entregue</span><span className="text-gray-400">Email com a figurinha enviado com sucesso</span></div>
+            <div className="flex items-center gap-2"><span className="bg-gray-500/20 text-gray-400 border border-gray-500/30 px-2 py-0.5 rounded text-xs font-bold">recuperado</span><span className="text-gray-400">Veio de email de recuperação de abandono</span></div>
+          </div>
+          <div className="border-t border-gray-700 mt-3 pt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+            <div className="flex items-center gap-2"><span className="bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded text-xs font-bold">CTA: Clicou</span><span className="text-gray-400">Clicou no botão "Receber minha figurinha" (checkout)</span></div>
+            <div className="flex items-center gap-2"><span className="text-xs text-gray-400">Etapas do funil:</span><span className="text-gray-400">Quiz 1→2→3 → Gerou → Viu preview → Checkout → Pagou</span></div>
+          </div>
+        </div>
+
+        {/* Quem chegou na página de obrigado (comprou) */}
+        <div className="bg-gray-800 rounded-xl p-5 mt-6 mb-8">
+          <h2 className="text-lg font-bold mb-4">Página de obrigado — compraram <span className="text-green-400 ml-2">{funil.obrigados.length}</span></h2>
+          {funil.obrigados.length === 0 ? (
+            <p className="text-gray-500 text-sm">Nenhuma visita ainda.</p>
+          ) : (
+            <div className="overflow-x-auto max-h-80 overflow-y-auto">
+              <table className="w-full text-sm min-w-[400px]">
+                <thead className="sticky top-0 bg-gray-800">
+                  <tr className="text-gray-400 text-left text-xs border-b border-gray-700">
+                    <th className="pb-2 pr-4 py-2">Nome</th>
+                    <th className="pb-2 pr-4 py-2">Email</th>
+                    <th className="pb-2 pr-4 py-2">Telefone</th>
+                    <th className="pb-2 py-2">Data</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {funil.obrigados.map(o => (
+                    <tr key={o.session_id} className="border-t border-gray-700/50 text-xs hover:bg-gray-700/30">
+                      <td className="py-2 pr-4 text-gray-300">{o.nome || "—"}</td>
+                      <td className="py-2 pr-4 text-gray-400">{o.email}</td>
+                      <td className="py-2 pr-4">
+                        {o.telefone
+                          ? <a href={`https://wa.me/${o.telefone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="text-green-400 hover:text-green-300">{o.telefone}</a>
+                          : <span className="text-gray-600">—</span>}
+                      </td>
+                      <td className="py-2 text-gray-500">{new Date(o.updated_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Modal de reenvio */}

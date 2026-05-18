@@ -19,6 +19,14 @@ export default function Obrigado() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Tracking obrigado
+    try {
+      const sid = sessionStorage.getItem("_fsid");
+      if (sid) navigator.sendBeacon("/api/track", new Blob([JSON.stringify({ session_id: sid, step: "obrigado" })], { type: "application/json" }));
+    } catch { /* ignora */ }
+  }, []);
+
+  useEffect(() => {
     // 1. Melhor caso: URL base64 já está na sessão (mesma aba, geração recém feita)
     const urlFromSession = (() => { try { return sessionStorage.getItem("figurinha_sticker_url"); } catch { return null; } })();
     if (urlFromSession) {
