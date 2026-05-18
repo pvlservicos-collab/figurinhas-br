@@ -29,7 +29,7 @@ interface Stats {
 
 interface FunilData {
   funnel: { step: string; count: number }[];
-  leads: { session_id: string; email: string; nome: string | null; step: string; updated_at: string }[];
+  leads: { session_id: string; email: string; nome: string | null; step: string; updated_at: string; telefone: string | null }[];
   pagos: number;
 }
 
@@ -49,12 +49,9 @@ const STEP_LABEL: Record<string, string> = {
 };
 
 export default function AdminDashboard() {
-  const [token, setToken] = useState("");
-  const [authenticated, setAuthenticated] = useState(false);
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [stats, setStats] = useState<Stats>({ total: 0, pendentes: 0, pagos: 0, entregues: 0 });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [searchDebounce, setSearchDebounce] = useState("");
@@ -69,30 +66,22 @@ export default function AdminDashboard() {
   const pedidosRef = useRef(pedidos);
   pedidosRef.current = pedidos;
 
-  const fetchFunil = useCallback(async (t: string) => {
+  const fetchFunil = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/funil", { headers: { Authorization: `Bearer ${t}` } });
+      const res = await fetch("/api/admin/funil");
       if (res.ok) setFunil(await res.json());
     } catch { /* ignora */ }
   }, []);
 
-  const fetchPedidos = useCallback(async (t: string, searchTerm = "", append = false) => {
+  const fetchPedidos = useCallback(async (searchTerm = "", append = false) => {
     if (!append) setLoading(true);
     else setLoadingMore(true);
-    setError("");
     try {
       const offset = append ? pedidosRef.current.length : 0;
       const params = new URLSearchParams({ offset: String(offset), limit: "100" });
       if (searchTerm.trim()) params.set("search", searchTerm.trim());
-      const res = await fetch(`/api/admin/pedidos?${params}`, {
-        headers: { Authorization: `Bearer ${t}` },
-      });
-      if (!res.ok) {
-        setError("Token inválido");
-        setAuthenticated(false);
-        localStorage.removeItem("admin_token");
-        return;
-      }
+      const res = await fetch(`/api/admin/pedidos?${params}`);
+      if (!res.ok) return;
       const data = await res.json();
       if (append) {
         setPedidos(prev => [...prev, ...data.pedidos]);
@@ -101,49 +90,38 @@ export default function AdminDashboard() {
       }
       setStats(data.stats);
       setHasMore(data.hasMore);
-      setAuthenticated(true);
-      localStorage.setItem("admin_token", t);
-    } catch {
-      setError("Erro ao carregar dados");
-    } finally {
+    } catch { /* ignora */ } finally {
       setLoading(false);
       setLoadingMore(false);
     }
   }, []);
 
   useEffect(() => {
-    const saved = localStorage.getItem("admin_token");
-    if (saved) { setToken(saved); fetchPedidos(saved); fetchFunil(saved); }
+    fetchPedidos();
+    fetchFunil();
   }, [fetchPedidos, fetchFunil]);
 
-  const handleLogin = (e: React.FormEvent) => { e.preventDefault(); fetchPedidos(token); fetchFunil(token); };
-
-  // Debounce pesquisa — busca no banco após 500ms sem digitar
+  // Debounce pesquisa
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearchDebounce(search);
-    }, 500);
+    const timer = setTimeout(() => setSearchDebounce(search), 500);
     return () => clearTimeout(timer);
   }, [search]);
 
   useEffect(() => {
-    if (authenticated && token) {
-      fetchPedidos(token, searchDebounce);
-    }
-  }, [searchDebounce, authenticated, token, fetchPedidos]);
+    fetchPedidos(searchDebounce);
+  }, [searchDebounce, fetchPedidos]);
 
   useEffect(() => {
-    if (!authenticated) return;
-    const interval = setInterval(() => fetchPedidos(token, searchDebounce), 30000);
+    const interval = setInterval(() => { fetchPedidos(searchDebounce); fetchFunil(); }, 30000);
     return () => clearInterval(interval);
-  }, [authenticated, token, searchDebounce, fetchPedidos]);
+  }, [searchDebounce, fetchPedidos, fetchFunil]);
 
   useEffect(() => {
     if (viewerIndex === null) return;
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setViewerIndex(null);
       if (e.key === "ArrowLeft" && viewerIndex > 0) setViewerIndex(viewerIndex - 1);
-      if (e.key === "ArrowRight" && viewerIndex < filteredPedidos.length - 1) setViewerIndex(viewerIndex + 1);
+      if (e.key === "ArrowRight" && viewerIndex < pedidos.length - 1) setViewerIndex(viewerIndex + 1);
     };
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
@@ -154,7 +132,7 @@ export default function AdminDashboard() {
     try {
       const res = await fetch("/api/admin/resend", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pedidoId, email }),
       });
       const data = await res.json();
@@ -162,7 +140,7 @@ export default function AdminDashboard() {
         setResendStatus("Enviado!");
         setResendPedidoId(null);
         setResendEmail("");
-        fetchPedidos(token);
+        fetchPedidos();
       } else {
         setResendStatus(data.error || "Erro");
       }
@@ -180,20 +158,14 @@ export default function AdminDashboard() {
     link.click();
   };
 
-  const formatPhone = (phone: string) => {
-    return phone.replace(/[^0-9+]/g, "").replace(/^\+/, "");
-  };
+  const formatPhone = (phone: string) => phone.replace(/[^0-9+]/g, "").replace(/^\+/, "");
 
   const handleWhatsApp = async (p: Pedido) => {
     const phone = p.telefone ? formatPhone(p.telefone) : "";
-
-    // Buscar todos os materiais comprados
     let linksMsg = "";
     if (p.email) {
       try {
-        const res = await fetch(`/api/admin/materiais?pedidoId=${p.id}&email=${encodeURIComponent(p.email)}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await fetch(`/api/admin/materiais?pedidoId=${p.id}&email=${encodeURIComponent(p.email)}`);
         if (res.ok) {
           const data = await res.json();
           for (const m of data.materiais) {
@@ -204,51 +176,26 @@ export default function AdminDashboard() {
             }
           }
         }
-      } catch {
-        // Fallback se não conseguir buscar materiais
-      }
+      } catch { /* ignora */ }
     }
-
-    // Fallback se não encontrou materiais
     if (!linksMsg) {
       if (p.sticker_url) linksMsg += `\n🏆 Figurinha Avulsa:\n${p.sticker_url}\n`;
       if (p.pdf_url) linksMsg += `\n📄 PDF para Impressão:\n${p.pdf_url}\n`;
     }
-
-    const msg = `Olá ${p.nome}! ⚽\n\nSua figurinha personalizada da Copa 2026 está pronta!\n\nAqui estão seus materiais:${linksMsg}\nObrigado pela compra! 🇧🇷\n\n✨ Conhece alguém que ia amar ter uma figurinha personalizada? Indique para os amigos:\nhttps://gerarfigurinhas.vercel.app/`;
+    const msg = `Olá ${p.nome}! ⚽\n\nSua figurinha personalizada da Copa 2026 está pronta!\n\nAqui estão seus materiais:${linksMsg}\nObrigado pela compra! 🇧🇷\n\n✨ Conhece alguém que ia amar ter uma figurinha personalizada? Indique para os amigos:\nhttps://figurinhadacopadomundo.com/`;
     const url = phone
       ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
       : `https://wa.me/?text=${encodeURIComponent(msg)}`;
     window.open(url, "_blank");
-
-    // Marcar WhatsApp como enviado
     try {
       await fetch("/api/admin/whats-ok", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pedidoId: p.id }),
       });
-      fetchPedidos(token);
+      fetchPedidos();
     } catch { /* ignora */ }
   };
-
-  if (!authenticated) {
-    return (
-      <main className="flex items-center justify-center min-h-screen bg-gray-900">
-        <form onSubmit={handleLogin} className="bg-gray-800 p-8 rounded-2xl shadow-xl max-w-sm w-full">
-          <h1 className="text-2xl font-bold text-white text-center mb-6">Admin Dashboard</h1>
-          <input type="password" value={token} onChange={(e) => setToken(e.target.value)}
-            placeholder="Token de acesso"
-            className="w-full px-4 py-3 rounded-xl bg-gray-700 text-white border border-gray-600 focus:border-blue-500 focus:outline-none mb-4" />
-          {error && <p className="text-red-400 text-sm mb-4 text-center">{error}</p>}
-          <button type="submit" disabled={loading}
-            className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-colors cursor-pointer">
-            {loading ? "Carregando..." : "Entrar"}
-          </button>
-        </form>
-      </main>
-    );
-  }
 
   const formatDate = (d: string | null) => {
     if (!d) return "—";
@@ -264,26 +211,17 @@ export default function AdminDashboard() {
     }
   };
 
-  // Pesquisa agora é feita no banco (server-side)
-  const filteredPedidos = pedidos;
-
-  const viewerPedido = viewerIndex !== null ? filteredPedidos[viewerIndex] : null;
+  const viewerPedido = viewerIndex !== null ? pedidos[viewerIndex] : null;
 
   return (
     <main className="min-h-screen bg-gray-900 text-white p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Dashboard Figurinhas</h1>
-          <div className="flex gap-2">
-            <button onClick={() => fetchPedidos(token)}
-              className="bg-gray-700 px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors text-sm cursor-pointer">
-              Atualizar
-            </button>
-            <button onClick={() => { localStorage.removeItem("admin_token"); setAuthenticated(false); setToken(""); }}
-              className="bg-gray-700 px-4 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm cursor-pointer">
-              Sair
-            </button>
-          </div>
+          <button onClick={() => { fetchPedidos(searchDebounce); fetchFunil(); }}
+            className="bg-gray-700 px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors text-sm cursor-pointer">
+            {loading ? "Carregando..." : "Atualizar"}
+          </button>
         </div>
 
         {/* Stats */}
@@ -307,59 +245,104 @@ export default function AdminDashboard() {
         </div>
 
         {/* Funil */}
-        {funil && (
-          <div className="bg-gray-800 rounded-xl p-5 mb-6">
-            <div className="flex items-center gap-4 mb-4">
-              <h2 className="text-lg font-bold">Funil de conversão</h2>
-              <button onClick={() => setFunilTab("funil")} className={`text-sm px-3 py-1 rounded-lg cursor-pointer ${funilTab === "funil" ? "bg-blue-600" : "bg-gray-700 hover:bg-gray-600"}`}>Funil</button>
-              <button onClick={() => setFunilTab("leads")} className={`text-sm px-3 py-1 rounded-lg cursor-pointer ${funilTab === "leads" ? "bg-blue-600" : "bg-gray-700 hover:bg-gray-600"}`}>Leads ({funil.leads.length})</button>
-              {funilTab === "leads" && (
-                <button onClick={() => {
-                  const rows = [["Email","Nome","Etapa","Data"].join(","), ...funil.leads.map(l => [l.email, l.nome || "", STEP_LABEL[l.step] || l.step, new Date(l.updated_at).toLocaleString("pt-BR")].map(v => `"${v}"`).join(","))];
-                  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["\uFEFF" + rows.join("\n")], { type: "text/csv;charset=utf-8;" })); a.download = "leads.csv"; a.click();
-                }} className="ml-auto text-sm bg-green-700 hover:bg-green-600 px-3 py-1 rounded-lg cursor-pointer">
-                  Exportar CSV
+        {funil && (() => {
+          const stepCounts = FUNNEL_STEPS.map(({ key }) => ({
+            key,
+            count: key === "pago" ? funil.pagos : (funil.funnel.find(f => f.step === key)?.count ?? 0),
+          }));
+          const maxCount = Math.max(...stepCounts.map(s => s.count), 1);
+
+          const downloadLeads = () => {
+            const rows = [
+              ["Nome", "Email", "Telefone", "Etapa", "Data"].join(","),
+              ...funil.leads.map(l => [
+                l.nome || "", l.email, l.telefone || "", STEP_LABEL[l.step] || l.step,
+                new Date(l.updated_at).toLocaleString("pt-BR"),
+              ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")),
+            ];
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(new Blob(["\uFEFF" + rows.join("\n")], { type: "text/csv;charset=utf-8;" }));
+            a.download = "leads.csv";
+            a.click();
+          };
+
+          return (
+            <div className="bg-gray-800 rounded-xl p-5 mb-6">
+              <div className="flex items-center gap-4 mb-5 flex-wrap">
+                <h2 className="text-lg font-bold">Funil de conversão</h2>
+                <button onClick={() => setFunilTab("funil")} className={`text-sm px-3 py-1 rounded-lg cursor-pointer ${funilTab === "funil" ? "bg-blue-600" : "bg-gray-700 hover:bg-gray-600"}`}>Funil</button>
+                <button onClick={() => setFunilTab("leads")} className={`text-sm px-3 py-1 rounded-lg cursor-pointer ${funilTab === "leads" ? "bg-blue-600" : "bg-gray-700 hover:bg-gray-600"}`}>Leads ({funil.leads.length})</button>
+                <button onClick={downloadLeads} className="ml-auto text-sm bg-green-700 hover:bg-green-600 px-3 py-1 rounded-lg cursor-pointer">
+                  ⬇ Baixar leads
                 </button>
+              </div>
+
+              {funilTab === "funil" ? (
+                <div className="space-y-3">
+                  {stepCounts.map(({ key, count }, i) => {
+                    const step = FUNNEL_STEPS[i];
+                    const pct = Math.round((count / maxCount) * 100);
+                    const dropPct = i > 0 && stepCounts[i - 1].count > 0
+                      ? Math.round((1 - count / stepCounts[i - 1].count) * 100)
+                      : null;
+                    return (
+                      <div key={key}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs text-gray-400">{step.label}</span>
+                          <div className="flex items-center gap-3">
+                            {dropPct !== null && dropPct > 0 && (
+                              <span className="text-xs text-red-400">-{dropPct}%</span>
+                            )}
+                            <span className={`text-sm font-bold ${step.color}`}>{count}</span>
+                          </div>
+                        </div>
+                        <div className="w-full bg-gray-700 rounded-full h-6 overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${pct}%`,
+                              background: key === "pago" ? "#22c55e" : key === "checkout" ? "#a855f7" : key === "result_ok" ? "#f97316" : key === "loading" ? "#eab308" : "#3b82f6",
+                              minWidth: count > 0 ? "2%" : "0",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="overflow-x-auto max-h-96 overflow-y-auto">
+                  <table className="w-full text-sm min-w-[500px]">
+                    <thead className="sticky top-0 bg-gray-800">
+                      <tr className="text-gray-400 text-left text-xs border-b border-gray-700">
+                        <th className="pb-2 pr-4 py-2">Nome</th>
+                        <th className="pb-2 pr-4 py-2">Email</th>
+                        <th className="pb-2 pr-4 py-2">Telefone</th>
+                        <th className="pb-2 pr-4 py-2">Etapa</th>
+                        <th className="pb-2 py-2">Data</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {funil.leads.map(l => (
+                        <tr key={l.session_id} className="border-t border-gray-700/50 text-xs hover:bg-gray-700/30">
+                          <td className="py-2 pr-4 text-gray-300">{l.nome || "—"}</td>
+                          <td className="py-2 pr-4 text-gray-400">{l.email}</td>
+                          <td className="py-2 pr-4">
+                            {l.telefone
+                              ? <a href={`https://wa.me/${l.telefone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="text-green-400 hover:text-green-300">{l.telefone}</a>
+                              : <span className="text-gray-600">—</span>}
+                          </td>
+                          <td className="py-2 pr-4"><span className="bg-gray-600 px-2 py-0.5 rounded text-gray-200">{STEP_LABEL[l.step] || l.step}</span></td>
+                          <td className="py-2 text-gray-500">{new Date(l.updated_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
-            {funilTab === "funil" ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-                {FUNNEL_STEPS.map(({ key, label, color }) => {
-                  const count = funil.funnel.find(f => f.step === key)?.count ?? (key === "pago" ? funil.pagos : 0);
-                  return (
-                    <div key={key} className="bg-gray-700 rounded-lg p-4 text-center">
-                      <p className={`text-2xl font-bold ${color}`}>{count}</p>
-                      <p className="text-gray-400 text-xs mt-1">{label}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="overflow-x-auto max-h-80 overflow-y-auto">
-                <table className="w-full text-sm min-w-[400px]">
-                  <thead className="sticky top-0 bg-gray-800">
-                    <tr className="text-gray-400 text-left text-xs">
-                      <th className="pb-2 pr-4">Email</th>
-                      <th className="pb-2 pr-4">Nome</th>
-                      <th className="pb-2 pr-4">Etapa</th>
-                      <th className="pb-2">Data</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {funil.leads.map(l => (
-                      <tr key={l.session_id} className="border-t border-gray-700/50 text-xs">
-                        <td className="py-2 pr-4 text-gray-300">{l.email}</td>
-                        <td className="py-2 pr-4 text-gray-400">{l.nome || "—"}</td>
-                        <td className="py-2 pr-4"><span className="bg-gray-600 px-2 py-0.5 rounded text-gray-200">{STEP_LABEL[l.step] || l.step}</span></td>
-                        <td className="py-2 text-gray-500">{new Date(l.updated_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
+          );
+        })()}
 
         {/* Busca */}
         <div className="mb-4">
@@ -395,7 +378,7 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {filteredPedidos.map((p, i) => (
+                {pedidos.map((p, i) => (
                   <tr key={p.id} className="border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors">
                     <td className="px-4 py-3 text-gray-500">{p.id}</td>
                     <td className="px-4 py-3">
@@ -423,7 +406,6 @@ export default function AdminDashboard() {
                     <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">{formatDate(p.created_at)}</td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1">
-                        {/* Download */}
                         {p.sticker_url && (
                           <button onClick={() => handleDownload(p.sticker_url, p.nome)}
                             title="Download figurinha"
@@ -431,31 +413,21 @@ export default function AdminDashboard() {
                             ⬇
                           </button>
                         )}
-                        {/* Reenviar email */}
                         <button onClick={() => { setResendPedidoId(p.id); setResendEmail(p.email || ""); }}
                           title="Reenviar por email"
                           className="bg-blue-600 hover:bg-blue-500 px-2 py-1 rounded text-xs cursor-pointer transition-colors">
                           ✉
                         </button>
-                        {/* WhatsApp */}
                         {p.whats_pendente && !p.whats_enviado ? (
                           <button onClick={() => handleWhatsApp(p)}
-                            title="Entregar no WhatsApp (falha na entrega automática)"
+                            title="Entregar no WhatsApp"
                             className="bg-orange-500 hover:bg-orange-400 px-2 py-1 rounded text-xs cursor-pointer transition-colors animate-pulse font-bold">
                             📲 Entregar
                           </button>
                         ) : p.whats_enviado && p.whats_pendente ? (
-                          <span
-                            title="Entregue automaticamente via Z-API"
-                            className="bg-green-700/50 text-green-400 px-2 py-1 rounded text-xs border border-green-600/30">
-                            🤖 Auto
-                          </span>
+                          <span className="bg-green-700/50 text-green-400 px-2 py-1 rounded text-xs border border-green-600/30">🤖 Auto</span>
                         ) : p.whats_enviado ? (
-                          <span
-                            title="Entregue manualmente"
-                            className="bg-green-700/50 text-green-400 px-2 py-1 rounded text-xs border border-green-600/30">
-                            ✅ Whats OK
-                          </span>
+                          <span className="bg-green-700/50 text-green-400 px-2 py-1 rounded text-xs border border-green-600/30">✅ OK</span>
                         ) : (
                           <button onClick={() => handleWhatsApp(p)}
                             title="Enviar via WhatsApp"
@@ -470,18 +442,17 @@ export default function AdminDashboard() {
               </tbody>
             </table>
           </div>
-          {filteredPedidos.length === 0 && (
+          {pedidos.length === 0 && !loading && (
             <p className="text-gray-500 text-center py-12">Nenhum pedido encontrado.</p>
           )}
         </div>
 
-        {/* Ver mais */}
         {hasMore && (
           <button
-            onClick={() => fetchPedidos(token, searchDebounce, true)}
+            onClick={() => fetchPedidos(searchDebounce, true)}
             disabled={loadingMore}
             className="w-full mt-4 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-xl cursor-pointer transition-colors disabled:opacity-50">
-            {loadingMore ? "Carregando..." : `Ver mais (${filteredPedidos.length} exibidos)`}
+            {loadingMore ? "Carregando..." : `Ver mais (${pedidos.length} exibidos)`}
           </button>
         )}
       </div>
@@ -552,14 +523,8 @@ export default function AdminDashboard() {
                   className="bg-orange-500 hover:bg-orange-400 animate-pulse px-4 py-2 rounded-lg text-sm cursor-pointer transition-colors">
                   📲 Entregar WhatsApp
                 </button>
-              ) : viewerPedido.whats_enviado && viewerPedido.whats_pendente ? (
-                <span className="bg-green-700/50 text-green-400 px-4 py-2 rounded-lg text-sm border border-green-600/30">
-                  🤖 Entregue Auto
-                </span>
               ) : viewerPedido.whats_enviado ? (
-                <span className="bg-green-700/50 text-green-400 px-4 py-2 rounded-lg text-sm border border-green-600/30">
-                  ✅ Whats OK
-                </span>
+                <span className="bg-green-700/50 text-green-400 px-4 py-2 rounded-lg text-sm border border-green-600/30">✅ Entregue</span>
               ) : (
                 <button onClick={() => handleWhatsApp(viewerPedido)}
                   className="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-lg text-sm cursor-pointer transition-colors">
@@ -567,9 +532,9 @@ export default function AdminDashboard() {
                 </button>
               )}
             </div>
-            <p className="text-gray-600 text-xs">{viewerIndex! + 1} de {filteredPedidos.length}</p>
+            <p className="text-gray-600 text-xs">{viewerIndex! + 1} de {pedidos.length}</p>
           </div>
-          {viewerIndex! < filteredPedidos.length - 1 && (
+          {viewerIndex! < pedidos.length - 1 && (
             <button onClick={(e) => { e.stopPropagation(); setViewerIndex(viewerIndex! + 1); }}
               className="absolute right-4 text-white/70 hover:text-white text-5xl cursor-pointer z-10">&#8250;</button>
           )}

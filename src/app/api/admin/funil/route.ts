@@ -1,12 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 
-export async function GET(req: NextRequest) {
-  const token = req.headers.get("authorization")?.replace("Bearer ", "");
-  if (!process.env.ADMIN_TOKEN || token !== process.env.ADMIN_TOKEN) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-  }
-
+export async function GET() {
   const sql = getDb();
 
   const [funnel, leads, pagos] = await Promise.all([
@@ -17,11 +12,17 @@ export async function GET(req: NextRequest) {
       ORDER BY count DESC
     `,
     sql`
-      SELECT session_id, email, nome, step, updated_at
-      FROM sessions
-      WHERE email IS NOT NULL
-      ORDER BY updated_at DESC
-      LIMIT 500
+      SELECT s.session_id, s.email, s.nome, s.step, s.updated_at,
+             p.telefone
+      FROM sessions s
+      LEFT JOIN LATERAL (
+        SELECT telefone FROM pedidos
+        WHERE email = s.email AND telefone IS NOT NULL
+        ORDER BY created_at DESC LIMIT 1
+      ) p ON true
+      WHERE s.email IS NOT NULL
+      ORDER BY s.updated_at DESC
+      LIMIT 1000
     `,
     sql`
       SELECT COUNT(*)::int as count FROM pedidos WHERE status IN ('pago','entregue','recuperado')

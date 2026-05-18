@@ -2,12 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
-  const token = req.headers.get("authorization")?.replace("Bearer ", "");
-  const adminToken = process.env.ADMIN_TOKEN;
-  if (!adminToken || token !== adminToken) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-  }
-
   const sql = getDb();
   const { searchParams } = new URL(req.url);
   const offset = Number(searchParams.get("offset") || "0");
@@ -73,12 +67,6 @@ export async function GET(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const token = req.headers.get("authorization")?.replace("Bearer ", "");
-  const adminToken = process.env.ADMIN_TOKEN;
-  if (!adminToken || token !== adminToken) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-  }
-
   const sql = getDb();
   const { searchParams } = new URL(req.url);
   const email = searchParams.get("email");

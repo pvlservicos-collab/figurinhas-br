@@ -18,11 +18,6 @@ const ROWS = 3;
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
-  const token = req.headers.get("authorization")?.replace("Bearer ", "");
-  if (token !== process.env.ADMIN_TOKEN) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-  }
-
   const { pedidoId, email } = await req.json();
   if (!pedidoId || !email) {
     return NextResponse.json({ error: "pedidoId e email obrigatórios" }, { status: 400 });
@@ -42,7 +37,6 @@ export async function POST(req: NextRequest) {
   const customerName = (pedido.nome || "cliente").replace(/[<>"'&]/g, "");
   let pdfUrl = pedido.pdf_url;
 
-  // Se não tem PDF, gerar
   if (!pdfUrl) {
     const stickerRes = await fetch(pedido.sticker_url);
     const stickerBytes = new Uint8Array(await stickerRes.arrayBuffer());
@@ -93,17 +87,14 @@ export async function POST(req: NextRequest) {
     await sql`UPDATE pedidos SET pdf_url = ${pdfUrl} WHERE id = ${pedidoId}`;
   }
 
-  // Baixar PDF e figurinha
   const pdfRes = await fetch(pdfUrl);
   const pdfBuffer2 = Buffer.from(await pdfRes.arrayBuffer());
   const stickerRes2 = await fetch(pedido.sticker_url);
   const stickerBuf2 = new Uint8Array(await stickerRes2.arrayBuffer());
 
-  // Enviar via módulo centralizado (Hostinger → Gmail → Resend)
   const { sendEmail } = await import("@/lib/email");
   await sendEmail(email, customerName, stickerBuf2, pdfBuffer2, pdfUrl);
 
-  // Atualizar status
   await sql`UPDATE pedidos SET email = ${email}, status = 'entregue', delivered_at = NOW() WHERE id = ${pedidoId}`;
 
   return NextResponse.json({ ok: true, message: `Enviado para ${email}` });

@@ -3,12 +3,6 @@ import { getDb } from "@/lib/db";
 import { list } from "@vercel/blob";
 
 export async function GET(req: NextRequest) {
-  const token = req.headers.get("authorization")?.replace("Bearer ", "");
-  const adminToken = process.env.ADMIN_TOKEN;
-  if (!adminToken || token !== adminToken) {
-    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
-  }
-
   const pedidoId = req.nextUrl.searchParams.get("pedidoId");
   const email = req.nextUrl.searchParams.get("email");
 
@@ -18,7 +12,6 @@ export async function GET(req: NextRequest) {
 
   const sql = getDb();
 
-  // Buscar figurinha específica pelo pedidoId, ou fallback por email
   const pedido = pedidoId
     ? await sql`SELECT id, nome, email, sticker_id, sticker_url, pdf_url FROM pedidos WHERE id = ${Number(pedidoId)}`
     : await sql`SELECT id, nome, email, sticker_id, sticker_url, pdf_url FROM pedidos WHERE email = ${email} AND sticker_url IS NOT NULL ORDER BY created_at DESC LIMIT 1`;
@@ -30,7 +23,6 @@ export async function GET(req: NextRequest) {
   const p = pedido[0];
   const customerEmail = p.email || email;
 
-  // Buscar order bumps comprados por esse email
   const bumps = customerEmail
     ? await sql`SELECT DISTINCT product_name FROM pedido_items WHERE email = ${customerEmail} AND item_type = 'order_bump'`
     : [];
@@ -41,25 +33,21 @@ export async function GET(req: NextRequest) {
   const materiais: { tipo: string; nome: string; url: string }[] = [];
   const clienteNome = (p.nome || "figurinha").toLowerCase().replace(/\s+/g, "-");
 
-  // Figurinha avulsa (PNG)
   if (p.sticker_url) {
     materiais.push({ tipo: "figurinha", nome: `Figurinha ${p.nome} (PNG)`, url: dl(p.sticker_url, `figurinha-${clienteNome}`) });
   }
 
-  // PDF figurinhas impressão
   if (p.pdf_url) {
     materiais.push({ tipo: "pdf", nome: `PDF Figurinhas ${p.nome} (A4)`, url: dl(p.pdf_url, `figurinhas-impressao-${clienteNome}`) });
   }
 
   const bumpNames = bumps.map((b: Record<string, string>) => (b.product_name || "").toLowerCase());
 
-  // Pacotinho
-  if (bumpNames.some(n => n.includes("pacot") || n.includes("impressa") || n.includes("impressão"))) {
+  if (bumpNames.some((n: string) => n.includes("pacot") || n.includes("impressa") || n.includes("impressão"))) {
     materiais.push({ tipo: "pacotinho", nome: "Pacotinho Oficial Copa 2026", url: dl(`${BASE}/pacotinho-copa-2026.pdf`, "pacotinho-copa-2026") });
   }
 
-  // Poster A2
-  if (bumpNames.some(n => n.includes("poster"))) {
+  if (bumpNames.some((n: string) => n.includes("poster"))) {
     if (p.sticker_id) {
       const posterBlobs = await list({ prefix: `posters/${p.sticker_id}` }).catch(() => ({ blobs: [] }));
       if (posterBlobs.blobs.length > 0) {
@@ -70,8 +58,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Album
-  if (bumpNames.some(n => n.includes("album") || n.includes("álbum"))) {
+  if (bumpNames.some((n: string) => n.includes("album") || n.includes("álbum"))) {
     materiais.push({ tipo: "album", nome: "Album Copa Completo", url: "processando" });
   }
 
