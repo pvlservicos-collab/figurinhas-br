@@ -23,12 +23,12 @@ export async function GET(req: NextRequest) {
         ) THEN TRUE ELSE FALSE END as whats_pendente,
         p.created_at, p.paid_at, p.delivered_at
       FROM pedidos p
-      WHERE p.nome ILIKE ${searchPattern} OR p.email ILIKE ${searchPattern} OR p.clube ILIKE ${searchPattern} OR p.telefone ILIKE ${searchPattern}
+      WHERE p.status IN ('pago','entregue','recuperado') AND (p.nome ILIKE ${searchPattern} OR p.email ILIKE ${searchPattern} OR p.clube ILIKE ${searchPattern} OR p.telefone ILIKE ${searchPattern})
       ORDER BY p.id DESC LIMIT ${limit} OFFSET ${offset}
     `;
     const countResult = await sql`
       SELECT COUNT(*)::int as total FROM pedidos
-      WHERE nome ILIKE ${searchPattern} OR email ILIKE ${searchPattern} OR clube ILIKE ${searchPattern} OR telefone ILIKE ${searchPattern}
+      WHERE status IN ('pago','entregue','recuperado') AND (nome ILIKE ${searchPattern} OR email ILIKE ${searchPattern} OR clube ILIKE ${searchPattern} OR telefone ILIKE ${searchPattern})
     `;
     totalFiltered = countResult[0].total;
   } else {
@@ -41,17 +41,19 @@ export async function GET(req: NextRequest) {
           AND pi.product_name LIKE '%What%'
         ) THEN TRUE ELSE FALSE END as whats_pendente,
         p.created_at, p.paid_at, p.delivered_at
-      FROM pedidos p ORDER BY p.id DESC LIMIT ${limit} OFFSET ${offset}
+      FROM pedidos p
+      WHERE p.status IN ('pago', 'entregue', 'recuperado')
+      ORDER BY p.id DESC LIMIT ${limit} OFFSET ${offset}
     `;
-    const countResult = await sql`SELECT COUNT(*)::int as total FROM pedidos`;
+    const countResult = await sql`SELECT COUNT(*)::int as total FROM pedidos WHERE status IN ('pago','entregue','recuperado')`;
     totalFiltered = countResult[0].total;
   }
 
   const statsResult = await sql`
     SELECT
-      COUNT(*)::int AS total,
+      COUNT(*) FILTER (WHERE status IN ('pago', 'entregue', 'recuperado'))::int AS total,
       COUNT(*) FILTER (WHERE status = 'pendente')::int AS pendentes,
-      COUNT(*) FILTER (WHERE status IN ('pago', 'entregue'))::int AS pagos,
+      COUNT(*) FILTER (WHERE status IN ('pago', 'entregue', 'recuperado'))::int AS pagos,
       COUNT(*) FILTER (WHERE status = 'entregue')::int AS entregues
     FROM pedidos
   `;
