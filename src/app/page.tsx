@@ -231,7 +231,7 @@ export default function Home() {
       {appStep === "loading-generate" && (
         <LoadingScreen
           title="GERANDO SUA FIGURINHA"
-          gifUrl="https://media3.giphy.com/media/tkzfoxijYuxNK/giphy.gif"
+          gifUrl="/sorteio.webp"
           longWait
           startTime={genStartTime}
         />

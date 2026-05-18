@@ -101,7 +101,7 @@ export default function LoadingScreen({ title, gifUrl, longWait, startTime }: Lo
 
         {longWait && (
           <p className="text-sm font-bold text-copa-blue text-center -mt-4" style={{ fontFamily: "var(--font-papernotes)" }}>
-            Não saia desta tela, isso pode levar até 2 minutos.
+            Não saia dessa tela, leva até 2 minutos.
           </p>
         )}
 
@@ -109,8 +109,15 @@ export default function LoadingScreen({ title, gifUrl, longWait, startTime }: Lo
         <img
           src={gifUrl}
           alt="Carregando..."
-          className="w-48 h-48 rounded-2xl object-cover"
+          className={longWait ? "w-full rounded-2xl object-cover" : "w-48 h-48 rounded-2xl object-cover"}
         />
+
+        {longWait && (
+          <p className="text-base font-bold text-copa-blue text-center leading-snug" style={{ fontFamily: "var(--font-papernotes)" }}>
+            Adquira sua figurinha HOJE e concorra a{" "}
+            <span className="text-lg" style={{ fontFamily: "var(--font-titulo)" }}>500 REAIS</span>
+          </p>
+        )}
 
         <p
           className="text-base text-center min-h-[3rem] transition-opacity duration-500"
