@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
 
   // Rate limit por IP
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
-  if (!checkRateLimit(ip, 3, 60000)) {
+  if (!checkRateLimit(ip, 10, 60000)) {
     return NextResponse.json({ error: "Muitas requisições. Aguarde 1 minuto." }, { status: 429 });
   }
 
