@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import type { Chart as ChartType } from "chart.js";
 
 interface Lead {
   session_id: string;
@@ -18,15 +19,17 @@ interface FunilData {
   leads: Lead[];
   pagos: number;
   obrigados: { session_id: string; email: string; nome: string | null; updated_at: string; telefone: string | null }[];
+  daily: { day: string; count: number }[];
 }
 
 const FUNNEL_STEPS = [
-  { key: "quiz_1",   label: "Card 2 — Nome/foto",      color: "#3b82f6" },
-  { key: "quiz_2",   label: "Card 3 — Clube",           color: "#3b82f6" },
-  { key: "quiz_3",   label: "Card 4 — Email",           color: "#3b82f6" },
-  { key: "loading",  label: "Gerou figurinha",          color: "#eab308" },
-  { key: "result_ok",label: "Viu preview c/ preço",     color: "#f97316" },
-  { key: "checkout", label: "Clicou em comprar",        color: "#a855f7" },
+  { key: "quiz_1",     label: "Card 2 — Nome/foto",    color: "#3b82f6" },
+  { key: "quiz_2",     label: "Card 3 — Clube",        color: "#3b82f6" },
+  { key: "quiz_3",     label: "Card 4 — Email",        color: "#3b82f6" },
+  { key: "loading",    label: "Gerou figurinha",       color: "#eab308" },
+  { key: "result_ok",  label: "Viu preview c/ preço",  color: "#f97316" },
+  { key: "result_error", label: "Erro na geração",     color: "#ef4444" },
+  { key: "checkout",   label: "Clicou em comprar",     color: "#a855f7" },
 ];
 
 const STEP_LABEL: Record<string, string> = {
@@ -40,35 +43,126 @@ const STEP_LABEL: Record<string, string> = {
   obrigado:     "Comprou ✓",
 };
 
-export default function AdminDashboard() {
-  const [funil, setFunil] = useState<FunilData>({ funnel: [], leads: [], pagos: 0, obrigados: [] });
-  const [tab, setTab] = useState<"funil" | "leads">("funil");
-  const [loading, setLoading] = useState(true);
+type Period = "today" | "7d" | "30d" | "all";
 
-  const fetchFunil = useCallback(async () => {
+const EMPTY: FunilData = { funnel: [], leads: [], pagos: 0, obrigados: [], daily: [] };
+
+export default function AdminDashboard() {
+  const [data, setData]       = useState<FunilData>(EMPTY);
+  const [period, setPeriod]   = useState<Period>("all");
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState<string | null>(null);
+  const [countdown, setCountdown] = useState(60);
+
+  const dailyRef  = useRef<HTMLCanvasElement>(null);
+  const funnelRef = useRef<HTMLCanvasElement>(null);
+  const dailyInst  = useRef<ChartType | null>(null);
+  const funnelInst = useRef<ChartType | null>(null);
+
+  const fetchData = useCallback(async (p: Period) => {
+    setLoading(true);
+    setError(null);
     try {
-      const res = await fetch("/api/admin/funil");
-      if (res.ok) setFunil(await res.json());
-    } catch { /* ignora */ } finally {
+      const res = await fetch(`/api/admin/funil?period=${p}`);
+      if (!res.ok) throw new Error(`Erro ${res.status}`);
+      setData(await res.json());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Erro ao carregar");
+    } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { fetchFunil(); }, [fetchFunil]);
+  useEffect(() => { fetchData(period); }, [period, fetchData]);
+
   useEffect(() => {
-    const iv = setInterval(fetchFunil, 30000);
+    const iv = setInterval(() => {
+      setCountdown(c => {
+        if (c <= 1) { fetchData(period); return 60; }
+        return c - 1;
+      });
+    }, 1000);
     return () => clearInterval(iv);
-  }, [fetchFunil]);
+  }, [period, fetchData]);
+
+  // Charts
+  useEffect(() => {
+    if (!dailyRef.current || !funnelRef.current) return;
+
+    import("chart.js/auto").then(({ default: Chart }) => {
+      // Daily chart
+      const last14 = Array.from({ length: 14 }, (_, i) => {
+        const d = new Date(); d.setDate(d.getDate() - 13 + i);
+        return d.toISOString().slice(0, 10);
+      });
+      const dailyMap = new Map(data.daily.map(d => [String(d.day).slice(0, 10), d.count]));
+      const dailyCounts = last14.map(d => dailyMap.get(d) || 0);
+      const dailyLabels = last14.map(d => { const [,m,dy] = d.split("-"); return `${dy}/${m}`; });
+
+      if (dailyInst.current) dailyInst.current.destroy();
+      if (dailyRef.current) {
+        dailyInst.current = new Chart(dailyRef.current, {
+          type: "bar",
+          data: {
+            labels: dailyLabels,
+            datasets: [{ label: "Sessões", data: dailyCounts, backgroundColor: "#3b82f699", borderColor: "#3b82f6", borderWidth: 1.5, borderRadius: 4 }],
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, grid: { color: "#E2E8F0" } }, x: { grid: { display: false } } },
+          },
+        });
+      }
+
+      // Funnel chart
+      const funnelCounts = FUNNEL_STEPS.map(s => data.funnel.find(f => f.step === s.key)?.count || 0);
+      if (funnelInst.current) funnelInst.current.destroy();
+      if (funnelRef.current) {
+        funnelInst.current = new Chart(funnelRef.current, {
+          type: "bar",
+          data: {
+            labels: FUNNEL_STEPS.map(s => s.label),
+            datasets: [{
+              label: "Sessões",
+              data: funnelCounts,
+              backgroundColor: FUNNEL_STEPS.map(s => s.color + "66"),
+              borderColor: FUNNEL_STEPS.map(s => s.color),
+              borderWidth: 1.5,
+              borderRadius: 4,
+            }],
+          },
+          options: {
+            responsive: true,
+            indexAxis: "y" as const,
+            plugins: { legend: { display: false } },
+            scales: { x: { beginAtZero: true, grid: { color: "#E2E8F0" } }, y: { grid: { display: false } } },
+          },
+        });
+      }
+    });
+
+    return () => {
+      dailyInst.current?.destroy();
+      funnelInst.current?.destroy();
+      dailyInst.current = null;
+      funnelInst.current = null;
+    };
+  }, [data]);
+
+  const totalSessions = data.leads.length;
+  const ctaCount      = data.leads.filter(l => l.cta_clicked).length;
+  const taxaCTA       = totalSessions > 0 ? Math.round(ctaCount / totalSessions * 100) : 0;
 
   const deleteLead = async (session_id: string) => {
     await fetch("/api/track", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id }) });
-    fetchFunil();
+    fetchData(period);
   };
 
-  const downloadLeads = () => {
+  const downloadCSV = () => {
     const rows = [
       ["Nome", "Email", "Telefone", "Último card", "Clicou comprar", "Data"].join(","),
-      ...funil.leads.map(l => [
+      ...data.leads.map(l => [
         l.nome || "", l.email, l.telefone || "",
         STEP_LABEL[l.step] || l.step,
         l.cta_clicked ? "Sim" : "Não",
@@ -77,165 +171,169 @@ export default function AdminDashboard() {
     ];
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob(["\uFEFF" + rows.join("\n")], { type: "text/csv;charset=utf-8;" }));
-    a.download = "leads.csv";
+    a.download = "leads-figurinha.csv";
     a.click();
   };
 
-  const stepCounts = FUNNEL_STEPS.map(({ key }) => ({
-    key,
-    count: funil.funnel.find(f => f.step === key)?.count ?? 0,
-  }));
-  const maxCount = Math.max(...stepCounts.map(s => s.count), 1);
+  const PERIODS: { key: Period; label: string }[] = [
+    { key: "today", label: "Hoje" },
+    { key: "7d",   label: "7 dias" },
+    { key: "30d",  label: "30 dias" },
+    { key: "all",  label: "Tudo" },
+  ];
+
+  const KPI_CARDS = [
+    { label: "Sessões",   value: totalSessions,         sub: "com email capturado",  color: "#0F172A" },
+    { label: "CTA",       value: ctaCount,              sub: "clicaram em comprar",  color: "#a855f7" },
+    { label: "Compras",   value: data.obrigados.length, sub: "página de obrigado",   color: "#059669" },
+    { label: "Taxa CTA",  value: `${taxaCTA}%`,         sub: "sessões → compra",     color: "#E2642A" },
+  ];
 
   return (
-    <main className="min-h-screen bg-gray-900 text-white p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
+    <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif", background: "#F1F5F9", minHeight: "100vh", fontSize: 14, color: "#1E293B" }}>
 
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Funil de leads</h1>
-          <div className="flex gap-2">
-            <button onClick={downloadLeads} className="bg-green-700 hover:bg-green-600 px-4 py-2 rounded-lg text-sm cursor-pointer transition-colors">
-              ⬇ Baixar leads CSV
+      {/* Header */}
+      <header style={{ background: "#0f0f0f", color: "#fff", padding: "14px 24px", display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 28, height: 28, background: "#3b82f6", borderRadius: 5, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, color: "#fff" }}>F</div>
+          <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: ".04em" }}>FIGURINHA</span>
+        </div>
+        <h1 style={{ fontSize: 16, fontWeight: 600, color: "#93c5fd", flex: 1, margin: 0 }}>Dashboard Analytics</h1>
+        <div style={{ display: "flex", gap: 6 }}>
+          {PERIODS.map(p => (
+            <button key={p.key} onClick={() => { setPeriod(p.key); setCountdown(60); }}
+              style={{ background: period === p.key ? "#3b82f6" : "transparent", color: period === p.key ? "#fff" : "#94A3B8", border: `1px solid ${period === p.key ? "#3b82f6" : "#333"}`, borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontSize: 12, fontWeight: 600, transition: "all .15s" }}>
+              {p.label}
             </button>
-            <button onClick={fetchFunil} className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm cursor-pointer transition-colors">
-              {loading ? "..." : "Atualizar"}
-            </button>
+          ))}
+        </div>
+        <span style={{ fontSize: 11, color: "#555", marginLeft: "auto" }}>
+          {loading ? "Carregando..." : `Atualiza em ${countdown}s`}
+        </span>
+      </header>
+
+      <main style={{ maxWidth: 1320, margin: "0 auto", padding: "24px 20px" }}>
+
+        {error && (
+          <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", color: "#DC2626", padding: "10px 14px", borderRadius: 8, marginBottom: 16, fontSize: 12 }}>
+            {error}
+          </div>
+        )}
+
+        {/* KPI Cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 14, marginBottom: 24 }}>
+          {KPI_CARDS.map(c => (
+            <div key={c.label} style={{ background: "#fff", borderRadius: 12, padding: "18px 16px", boxShadow: "0 1px 3px rgba(0,0,0,.07)" }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 6 }}>{c.label}</div>
+              <div style={{ fontSize: 30, fontWeight: 800, color: c.color, lineHeight: 1 }}>{c.value}</div>
+              <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 3 }}>{c.sub}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Charts */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginBottom: 24 }}>
+          <div style={{ background: "#fff", borderRadius: 12, padding: 18, boxShadow: "0 1px 3px rgba(0,0,0,.07)" }}>
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: "#0F172A", marginBottom: 14 }}>📈 Sessões por dia (últimos 14 dias)</h3>
+            <canvas ref={dailyRef} style={{ maxHeight: 220 }} />
+          </div>
+          <div style={{ background: "#fff", borderRadius: 12, padding: 18, boxShadow: "0 1px 3px rgba(0,0,0,.07)" }}>
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: "#0F172A", marginBottom: 14 }}>🚪 Funil — onde as pessoas saem</h3>
+            <canvas ref={funnelRef} style={{ maxHeight: 220 }} />
           </div>
         </div>
 
-        {/* Funil / Leads tabs */}
-        <div className="bg-gray-800 rounded-xl p-5 mb-6">
-          <div className="flex gap-3 mb-5">
-            <button onClick={() => setTab("funil")} className={`text-sm px-4 py-2 rounded-lg cursor-pointer font-bold transition-colors ${tab === "funil" ? "bg-blue-600" : "bg-gray-700 hover:bg-gray-600"}`}>
-              Funil
-            </button>
-            <button onClick={() => setTab("leads")} className={`text-sm px-4 py-2 rounded-lg cursor-pointer font-bold transition-colors ${tab === "leads" ? "bg-blue-600" : "bg-gray-700 hover:bg-gray-600"}`}>
-              Leads ({funil.leads.length})
+        {/* Leads table */}
+        <div style={{ background: "#fff", borderRadius: 12, padding: 18, boxShadow: "0 1px 3px rgba(0,0,0,.07)", marginBottom: 24, overflowX: "auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+            <h3 style={{ fontSize: 13, fontWeight: 700, margin: 0 }}>👥 Leads ({data.leads.length})</h3>
+            <button onClick={downloadCSV}
+              style={{ background: "#3b82f6", color: "#fff", border: "none", borderRadius: 8, padding: "7px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", marginLeft: "auto" }}>
+              ⬇ Exportar CSV
             </button>
           </div>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, minWidth: 600 }}>
+            <thead>
+              <tr>
+                {["Data", "Nome", "Email", "Telefone", "Último Card", "CTA", ""].map(h => (
+                  <th key={h} style={{ background: "#F8FAFC", borderBottom: "1px solid #E2E8F0", padding: "8px 12px", textAlign: "left", fontWeight: 700, color: "#64748B", fontSize: 11, textTransform: "uppercase", letterSpacing: ".04em" }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.leads.length === 0 ? (
+                <tr><td colSpan={7} style={{ textAlign: "center", color: "#94A3B8", padding: 32, fontSize: 13 }}>Nenhuma sessão ainda.</td></tr>
+              ) : data.leads.map(l => (
+                <tr key={l.session_id} style={{ borderBottom: "1px solid #F1F5F9" }}>
+                  <td style={{ padding: "8px 12px", color: "#334155" }}>
+                    {new Date(l.updated_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                  </td>
+                  <td style={{ padding: "8px 12px", color: "#334155" }}>{l.nome || "—"}</td>
+                  <td style={{ padding: "8px 12px", color: "#64748B" }}>{l.email}</td>
+                  <td style={{ padding: "8px 12px" }}>
+                    {l.telefone
+                      ? <a href={`https://wa.me/${l.telefone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" style={{ color: "#059669", textDecoration: "none" }}>{l.telefone}</a>
+                      : <span style={{ color: "#CBD5E1" }}>—</span>}
+                  </td>
+                  <td style={{ padding: "8px 12px" }}>
+                    <span style={{ padding: "2px 8px", borderRadius: 99, fontSize: 10, fontWeight: 700, background: "#F1F5F9", color: "#475569" }}>
+                      {STEP_LABEL[l.step] || l.step}
+                    </span>
+                  </td>
+                  <td style={{ padding: "8px 12px" }}>
+                    {l.cta_clicked
+                      ? <span style={{ padding: "2px 8px", borderRadius: 99, fontSize: 10, fontWeight: 700, background: "#D1FAE5", color: "#065F46" }}>Clicou</span>
+                      : <span style={{ color: "#CBD5E1" }}>—</span>}
+                  </td>
+                  <td style={{ padding: "8px 12px" }}>
+                    <button onClick={() => deleteLead(l.session_id)}
+                      style={{ background: "none", border: "1px solid #E2E8F0", borderRadius: 6, color: "#94A3B8", cursor: "pointer", fontSize: 12, width: 26, height: 26, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                      ✕
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-          {tab === "funil" ? (
-            <div className="space-y-4">
-              {stepCounts.map(({ key, count }, i) => {
-                const step = FUNNEL_STEPS[i];
-                const pct = Math.round((count / maxCount) * 100);
-                const dropPct = i > 0 && stepCounts[i - 1].count > 0
-                  ? Math.round((1 - count / stepCounts[i - 1].count) * 100)
-                  : null;
-                return (
-                  <div key={key}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm text-gray-300">{step.label}</span>
-                      <div className="flex items-center gap-3">
-                        {dropPct !== null && dropPct > 0 && (
-                          <span className="text-xs text-red-400">-{dropPct}% desistiram</span>
-                        )}
-                        <span className="text-base font-bold text-white">{count}</span>
-                      </div>
-                    </div>
-                    <div className="w-full bg-gray-700 rounded-full h-7 overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-500 flex items-center pl-3"
-                        style={{ width: `${Math.max(pct, count > 0 ? 3 : 0)}%`, background: step.color }}
-                      >
-                        {pct > 10 && <span className="text-white text-xs font-bold">{pct}%</span>}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+        {/* Obrigado */}
+        <div style={{ background: "#fff", borderRadius: 12, padding: 18, boxShadow: "0 1px 3px rgba(0,0,0,.07)", marginBottom: 24, overflowX: "auto" }}>
+          <h3 style={{ fontSize: 13, fontWeight: 700, marginBottom: data.obrigados.length > 0 ? 14 : 0 }}>
+            ✅ Chegaram na página de obrigado ({data.obrigados.length})
+          </h3>
+          {data.obrigados.length === 0 ? (
+            <p style={{ fontSize: 13, color: "#94A3B8", marginTop: 8 }}>Nenhuma visita ainda.</p>
           ) : (
-            <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
-              <table className="w-full text-sm min-w-[560px]">
-                <thead className="sticky top-0 bg-gray-800">
-                  <tr className="text-gray-400 text-left text-xs border-b border-gray-700">
-                    <th className="py-2 pr-4">Nome</th>
-                    <th className="py-2 pr-4">Email</th>
-                    <th className="py-2 pr-4">Telefone</th>
-                    <th className="py-2 pr-4">Último card</th>
-                    <th className="py-2 pr-4">Clicou comprar</th>
-                    <th className="py-2 pr-4">Data</th>
-                    <th className="py-2"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {funil.leads.length === 0 && (
-                    <tr><td colSpan={7} className="py-8 text-center text-gray-500">Nenhum lead ainda.</td></tr>
-                  )}
-                  {funil.leads.map(l => (
-                    <tr key={l.session_id} className="border-t border-gray-700/50 text-xs hover:bg-gray-700/30">
-                      <td className="py-2 pr-4 text-gray-300">{l.nome || "—"}</td>
-                      <td className="py-2 pr-4 text-gray-400">{l.email}</td>
-                      <td className="py-2 pr-4">
-                        {l.telefone
-                          ? <a href={`https://wa.me/${l.telefone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="text-green-400 hover:text-green-300">{l.telefone}</a>
-                          : <span className="text-gray-600">—</span>}
-                      </td>
-                      <td className="py-2 pr-4">
-                        <span className="bg-gray-700 px-2 py-0.5 rounded text-gray-200">{STEP_LABEL[l.step] || l.step}</span>
-                      </td>
-                      <td className="py-2 pr-4">
-                        {l.cta_clicked
-                          ? <span className="bg-purple-500/20 text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded font-bold">Sim</span>
-                          : <span className="text-gray-600">Não</span>}
-                      </td>
-                      <td className="py-2 pr-4 text-gray-500">
-                        {new Date(l.updated_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
-                      </td>
-                      <td className="py-2">
-                        <button onClick={() => deleteLead(l.session_id)} className="text-gray-600 hover:text-red-400 transition-colors cursor-pointer text-sm">✕</button>
-                      </td>
-                    </tr>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, minWidth: 400 }}>
+              <thead>
+                <tr>
+                  {["Nome", "Email", "Telefone", "Data"].map(h => (
+                    <th key={h} style={{ background: "#F8FAFC", borderBottom: "1px solid #E2E8F0", padding: "8px 12px", textAlign: "left", fontWeight: 700, color: "#64748B", fontSize: 11, textTransform: "uppercase", letterSpacing: ".04em" }}>{h}</th>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </tr>
+              </thead>
+              <tbody>
+                {data.obrigados.map(o => (
+                  <tr key={o.session_id} style={{ borderBottom: "1px solid #F1F5F9" }}>
+                    <td style={{ padding: "8px 12px", color: "#334155" }}>{o.nome || "—"}</td>
+                    <td style={{ padding: "8px 12px", color: "#64748B" }}>{o.email}</td>
+                    <td style={{ padding: "8px 12px" }}>
+                      {o.telefone
+                        ? <a href={`https://wa.me/${o.telefone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" style={{ color: "#059669", textDecoration: "none" }}>{o.telefone}</a>
+                        : <span style={{ color: "#CBD5E1" }}>—</span>}
+                    </td>
+                    <td style={{ padding: "8px 12px", color: "#64748B" }}>
+                      {new Date(o.updated_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
 
-        {/* Obrigado — quem comprou */}
-        <div className="bg-gray-800 rounded-xl p-5 mb-8">
-          <h2 className="text-lg font-bold mb-4">
-            Chegaram na página de obrigado
-            <span className="text-green-400 ml-2 text-base">({funil.obrigados.length})</span>
-          </h2>
-          {funil.obrigados.length === 0 ? (
-            <p className="text-gray-500 text-sm">Nenhuma visita ainda.</p>
-          ) : (
-            <div className="overflow-x-auto max-h-80 overflow-y-auto">
-              <table className="w-full text-sm min-w-[400px]">
-                <thead className="sticky top-0 bg-gray-800">
-                  <tr className="text-gray-400 text-left text-xs border-b border-gray-700">
-                    <th className="py-2 pr-4">Nome</th>
-                    <th className="py-2 pr-4">Email</th>
-                    <th className="py-2 pr-4">Telefone</th>
-                    <th className="py-2">Data</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {funil.obrigados.map(o => (
-                    <tr key={o.session_id} className="border-t border-gray-700/50 text-xs hover:bg-gray-700/30">
-                      <td className="py-2 pr-4 text-gray-300">{o.nome || "—"}</td>
-                      <td className="py-2 pr-4 text-gray-400">{o.email}</td>
-                      <td className="py-2 pr-4">
-                        {o.telefone
-                          ? <a href={`https://wa.me/${o.telefone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="text-green-400 hover:text-green-300">{o.telefone}</a>
-                          : <span className="text-gray-600">—</span>}
-                      </td>
-                      <td className="py-2 text-gray-500">
-                        {new Date(o.updated_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
