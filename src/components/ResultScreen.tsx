@@ -85,15 +85,18 @@ export default function ResultScreen({ stickerUrl, stickerId, onRetry, onCheckou
     >
       {!stickerUrl ? (
         <div className="bg-white rounded-2xl p-8 text-center border-4 border-copa-blue max-w-sm w-full animate-slide-up">
-          <p className="text-4xl mb-3">📡</p>
+          <p className="text-4xl mb-3">⏳</p>
           <h2
             className="text-2xl font-bold text-copa-blue mb-2"
             style={{ fontFamily: "var(--font-titulo)" }}
           >
-            ERRO DE CONEXÃO
+            TENTE NOVAMENTE
           </h2>
+          <p className="text-base text-gray-600 mb-2" style={{ fontFamily: "var(--font-papernotes)" }}>
+            Às vezes os servidores da OpenAI congestionam.
+          </p>
           <p className="text-base text-gray-600 mb-6" style={{ fontFamily: "var(--font-papernotes)" }}>
-            Verifique sua conexão e clique no botão abaixo.
+            Clique em tentar novamente e será gerado automaticamente.
           </p>
           <button
             onClick={onRetry}
