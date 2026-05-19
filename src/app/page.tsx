@@ -93,6 +93,7 @@ export default function Home() {
       "quiz-1": "quiz_1",
       "quiz-2": "quiz_2",
       "quiz-3": "quiz_3",
+      "confirm": "confirm",
       "loading-generate": "loading",
       "result": stickerUrl ? "result_ok" : "result_error",
     };
