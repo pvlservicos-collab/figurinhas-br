@@ -146,8 +146,8 @@ export default function ResultScreen({ stickerUrl, stickerId, onRetry, onCheckou
 
           {/* GOOLL */}
           <h1
-            className="text-6xl md:text-8xl font-bold text-copa-blue text-center tracking-[0.1em] mb-1"
-            style={{ fontFamily: "var(--font-titulo)" }}
+            className="text-6xl md:text-8xl text-copa-blue text-center tracking-[0.1em] mb-1"
+            style={{ fontFamily: "'Montserrat', Arial, sans-serif", fontWeight: 600 }}
           >
             GOOLL!
           </h1>
