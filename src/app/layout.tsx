@@ -28,7 +28,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://cdn.utmify.com.br" />
         {/* Anton font — display=swap evita bloqueio de renderização */}
-        <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="min-h-full flex flex-col">
         {children}

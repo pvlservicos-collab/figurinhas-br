@@ -185,7 +185,7 @@ export default function ResultScreen({ stickerUrl, stickerId, onRetry, onCheckou
             className="w-full text-white font-bold text-xl md:text-2xl py-5 rounded-2xl
               active:scale-95 transition-all duration-200 cursor-pointer tracking-[0.15em] relative overflow-hidden"
             style={{
-              fontFamily: "'Anton', sans-serif",
+              fontFamily: "var(--font-titulo)",
               background: "linear-gradient(135deg, #002395 0%, #0040CC 50%, #002395 100%)",
               boxShadow: "0 6px 24px rgba(0,35,149,0.45), inset 0 1px 0 rgba(255,255,255,0.15)",
             }}
