@@ -6,7 +6,28 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
       "Bash(npx vercel:*)",
       "Bash(curl -s \"https://figurinhadacopadomundo.com/api/figurinha\" -X POST -H \"Content-Type: application/json\" -d '{\"test\":true}' -w \"\\\\nHTTP: %{http_code}\\\\nTime: %{time_total}s\")",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(grep -r \"CREATE TABLE\\\\|pedidos\\\\|sessions\" src/lib/db.ts src/app/api/*/route.ts)",
+      "Bash(curl -s \"https://figurinhadacopadomundo.com/api/setup-db\")",
+      "Bash(curl -s \"https://gerarfigurinhas.vercel.app/api/setup-db\")",
+      "Bash(curl -s \"http://localhost:3000/api/admin/funil\")",
+      "Bash(curl -v \"http://localhost:3000/api/admin/funil\")",
+      "Bash(curl.exe -s \"http://localhost:3000/api/admin/funil\")",
+      "Bash(npx tsc:*)",
+      "Bash(node -e ':*)",
+      "Bash(powershell -Command \"Invoke-WebRequest -Uri 'http://localhost:3000/api/setup-db' -UseBasicParsing | Select-Object -ExpandProperty Content\")",
+      "Bash(curl -s http://localhost:3000/api/admin/funil)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/api/admin/pedidos)",
+      "Read(//c/Users/pedro/.claude/projects/c--Users-pedro-Desktop-a-VINICIUS-WEB-FOLEM-MIDIA-oferta-copa-br/**)",
+      "Bash(python3 -c \" import json with open\\('/c/Users/pedro/.claude/projects/c--Users-pedro-Desktop-a-VINICIUS-WEB-FOLEM-MIDIA-oferta-copa-br/7d9b930b-2f73-4644-9317-c01dd5125fbe.jsonl'\\) as f: for line in f: try: obj = json.loads\\(line\\) msg = obj.get\\('message', {}\\) role = msg.get\\('role', ''\\) content = msg.get\\('content', ''\\) if role == 'user' and isinstance\\(content, list\\): for block in content: if isinstance\\(block, dict\\) and block.get\\('type'\\) == 'image': print\\('FOUND IMAGE BLOCK:', str\\(block\\)[:200]\\) elif isinstance\\(block, dict\\) and block.get\\('type'\\) == 'text': text = block.get\\('text', ''\\) if 'admin' in text.lower\\(\\) and \\('arquivo' in text.lower\\(\\) or 'imagem' in text.lower\\(\\) or 'screenshot' in text.lower\\(\\)\\): print\\('POSSIBLE:', text[:300]\\) except: pass \")",
+      "Bash(python3 -c \" import json with open\\('/c/Users/pedro/.claude/projects/c--Users-pedro-Desktop-a-VINICIUS-WEB-FOLEM-MIDIA-oferta-copa-br/7d9b930b-2f73-4644-9317-c01dd5125fbe.jsonl'\\) as f: for line in f: try: obj = json.loads\\(line\\) msg = obj.get\\('message', {}\\) role = msg.get\\('role', ''\\) content = msg.get\\('content', ''\\) if role == 'user': if isinstance\\(content, list\\): for block in content: if isinstance\\(block, dict\\): t = block.get\\('type',''\\) if t == 'image': print\\('IMAGE FOUND'\\) elif t == 'text': text = block.get\\('text',''\\) if len\\(text\\) > 5: print\\('USER TEXT:', text[:200]\\) elif isinstance\\(content, str\\) and content.strip\\(\\): print\\('USER STR:', content[:200]\\) except: pass \")",
+      "Bash(grep -o 'http[s]*://[^\"\\\\\\\\n ]*' \"/c/Users/pedro/.claude/projects/c--Users-pedro-Desktop-a-VINICIUS-WEB-FOLEM-MIDIA-oferta-copa-br/7d9b930b-2f73-4644-9317-c01dd5125fbe.jsonl\")",
+      "Read(//c/Users/pedro/Desktop/**)",
+      "Bash(ls /c/Users/pedro/Desktop/*.png /c/Users/pedro/Desktop/*.jpg /c/Users/pedro/Desktop/*.jpeg)",
+      "Bash(xargs ls:*)",
+      "Read(//c/Users/pedro/AppData/Local/Temp/claude/c--Users-pedro-Desktop-a-VINICIUS-WEB-FOLEM-MIDIA-oferta-copa-br//**)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(k,v\\) for k,v in d.get\\('dependencies',{}\\).items\\(\\)]\")",
+      "Bash(curl -s -X POST http://localhost:3000/api/track -H \"Content-Type: application/json\" -d '{\"session_id\":\"test123\",\"step\":\"quiz_1\",\"email\":\"teste@teste.com\",\"nome\":\"Teste\"}')"
     ]
   }
 }
