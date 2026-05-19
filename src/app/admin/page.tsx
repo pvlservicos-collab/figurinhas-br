@@ -55,6 +55,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState<string | null>(null);
   const [countdown, setCountdown] = useState(60);
+  const [pageSize, setPageSize] = useState(25);
+  const [page, setPage]         = useState(0);
 
   const dailyRef  = useRef<HTMLCanvasElement>(null);
   const funnelRef = useRef<HTMLCanvasElement>(null);
@@ -152,9 +154,12 @@ export default function AdminDashboard() {
     };
   }, [data]);
 
-  const totalSessions = data.leads.length;
-  const ctaCount      = data.leads.filter(l => l.cta_clicked).length;
+  const sortedLeads   = [...data.leads].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+  const totalSessions = sortedLeads.length;
+  const ctaCount      = sortedLeads.filter(l => l.cta_clicked).length;
   const taxaCTA       = totalSessions > 0 ? Math.round(ctaCount / totalSessions * 100) : 0;
+  const totalPages    = Math.max(1, Math.ceil(totalSessions / pageSize));
+  const pagedLeads    = sortedLeads.slice(page * pageSize, page * pageSize + pageSize);
 
   const deleteLead = async (session_id: string) => {
     await fetch("/api/track", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id }) });
@@ -247,12 +252,22 @@ export default function AdminDashboard() {
 
         {/* Leads table */}
         <div style={{ background: "#fff", borderRadius: 12, padding: 18, boxShadow: "0 1px 3px rgba(0,0,0,.07)", marginBottom: 24, overflowX: "auto" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-            <h3 style={{ fontSize: 13, fontWeight: 700, margin: 0 }}>👥 Leads ({data.leads.length})</h3>
-            <button onClick={downloadCSV}
-              style={{ background: "#3b82f6", color: "#fff", border: "none", borderRadius: 8, padding: "7px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer", marginLeft: "auto" }}>
-              ⬇ Exportar CSV
-            </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
+            <h3 style={{ fontSize: 13, fontWeight: 700, margin: 0 }}>👥 Leads ({totalSessions})</h3>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginLeft: "auto" }}>
+              <label style={{ fontSize: 11, color: "#64748B", fontWeight: 600 }}>Mostrar:</label>
+              <select
+                value={pageSize}
+                onChange={e => { setPageSize(Number(e.target.value)); setPage(0); }}
+                style={{ border: "1px solid #E2E8F0", borderRadius: 6, padding: "4px 8px", fontSize: 12, color: "#334155", cursor: "pointer" }}
+              >
+                {[10, 25, 50, 100].map(n => <option key={n} value={n}>{n} por página</option>)}
+              </select>
+              <button onClick={downloadCSV}
+                style={{ background: "#3b82f6", color: "#fff", border: "none", borderRadius: 8, padding: "7px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                ⬇ Exportar CSV
+              </button>
+            </div>
           </div>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, minWidth: 600 }}>
             <thead>
@@ -263,9 +278,9 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              {data.leads.length === 0 ? (
+              {pagedLeads.length === 0 ? (
                 <tr><td colSpan={7} style={{ textAlign: "center", color: "#94A3B8", padding: 32, fontSize: 13 }}>Nenhuma sessão ainda.</td></tr>
-              ) : data.leads.map(l => (
+              ) : pagedLeads.map(l => (
                 <tr key={l.session_id} style={{ borderBottom: "1px solid #F1F5F9" }}>
                   <td style={{ padding: "8px 12px", color: "#334155" }}>
                     {new Date(l.updated_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
@@ -297,6 +312,34 @@ export default function AdminDashboard() {
               ))}
             </tbody>
           </table>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 14, flexWrap: "wrap", gap: 8 }}>
+              <span style={{ fontSize: 11, color: "#64748B" }}>
+                {page * pageSize + 1}–{Math.min((page + 1) * pageSize, totalSessions)} de {totalSessions}
+              </span>
+              <div style={{ display: "flex", gap: 4 }}>
+                <button onClick={() => setPage(0)} disabled={page === 0}
+                  style={{ border: "1px solid #E2E8F0", borderRadius: 6, padding: "4px 8px", fontSize: 12, cursor: page === 0 ? "default" : "pointer", color: page === 0 ? "#CBD5E1" : "#334155", background: "#fff" }}>«</button>
+                <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
+                  style={{ border: "1px solid #E2E8F0", borderRadius: 6, padding: "4px 8px", fontSize: 12, cursor: page === 0 ? "default" : "pointer", color: page === 0 ? "#CBD5E1" : "#334155", background: "#fff" }}>‹</button>
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  const start = Math.max(0, Math.min(page - 2, totalPages - 5));
+                  const p = start + i;
+                  return (
+                    <button key={p} onClick={() => setPage(p)}
+                      style={{ border: "1px solid #E2E8F0", borderRadius: 6, padding: "4px 10px", fontSize: 12, cursor: "pointer", background: p === page ? "#3b82f6" : "#fff", color: p === page ? "#fff" : "#334155", fontWeight: p === page ? 700 : 400 }}>
+                      {p + 1}
+                    </button>
+                  );
+                })}
+                <button onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page === totalPages - 1}
+                  style={{ border: "1px solid #E2E8F0", borderRadius: 6, padding: "4px 8px", fontSize: 12, cursor: page === totalPages - 1 ? "default" : "pointer", color: page === totalPages - 1 ? "#CBD5E1" : "#334155", background: "#fff" }}>›</button>
+                <button onClick={() => setPage(totalPages - 1)} disabled={page === totalPages - 1}
+                  style={{ border: "1px solid #E2E8F0", borderRadius: 6, padding: "4px 8px", fontSize: 12, cursor: page === totalPages - 1 ? "default" : "pointer", color: page === totalPages - 1 ? "#CBD5E1" : "#334155", background: "#fff" }}>»</button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Obrigado */}
