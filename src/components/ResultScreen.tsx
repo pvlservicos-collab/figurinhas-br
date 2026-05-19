@@ -147,7 +147,7 @@ export default function ResultScreen({ stickerUrl, stickerId, onRetry, onCheckou
           {/* GOOLL */}
           <h1
             className="text-6xl md:text-8xl text-copa-blue text-center tracking-[0.1em] mb-1"
-            style={{ fontFamily: "'Montserrat', Arial, sans-serif", fontWeight: 600 }}
+            style={{ fontFamily: "var(--font-titulo)", fontWeight: 400 }}
           >
             GOOLL!
           </h1>
@@ -182,7 +182,7 @@ export default function ResultScreen({ stickerUrl, stickerId, onRetry, onCheckou
             className="w-full text-white font-bold text-xl md:text-2xl py-5 rounded-2xl
               active:scale-95 transition-all duration-200 cursor-pointer tracking-[0.15em] relative overflow-hidden"
             style={{
-              fontFamily: "var(--font-titulo)",
+              fontFamily: "'Anton', sans-serif",
               background: "linear-gradient(135deg, #002395 0%, #0040CC 50%, #002395 100%)",
               boxShadow: "0 6px 24px rgba(0,35,149,0.45), inset 0 1px 0 rgba(255,255,255,0.15)",
             }}
