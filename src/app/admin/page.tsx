@@ -60,6 +60,24 @@ export default function AdminDashboard() {
   const [pageSize, setPageSize] = useState(25);
   const [page, setPage]         = useState(0);
 
+  // Busca de figurinha por nome
+  const [searchQuery, setSearchQuery]   = useState("");
+  const [searchResults, setSearchResults] = useState<{ id: number; nome: string; email: string; sticker_url: string | null; status: string; created_at: string }[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchDone, setSearchDone]       = useState(false);
+
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) return;
+    setSearchLoading(true);
+    setSearchDone(false);
+    try {
+      const res = await fetch(`/api/admin/pedidos?search=${encodeURIComponent(searchQuery.trim())}&limit=20`);
+      const json = await res.json();
+      setSearchResults(json.pedidos || []);
+    } catch { setSearchResults([]); }
+    finally { setSearchLoading(false); setSearchDone(true); }
+  };
+
   const dailyRef  = useRef<HTMLCanvasElement>(null);
   const funnelRef = useRef<HTMLCanvasElement>(null);
   const dailyInst  = useRef<ChartType | null>(null);
@@ -252,6 +270,88 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        {/* Busca de figurinha */}
+        <div style={{ background: "#fff", borderRadius: 12, padding: 18, boxShadow: "0 1px 3px rgba(0,0,0,.07)", marginBottom: 24 }}>
+          <h3 style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>🔍 Buscar figurinha por nome / email</h3>
+          <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+            <input
+              type="text"
+              placeholder="Nome, email, clube ou telefone..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleSearch()}
+              style={{ flex: 1, border: "1px solid #E2E8F0", borderRadius: 8, padding: "8px 12px", fontSize: 13, outline: "none" }}
+            />
+            <button
+              onClick={handleSearch}
+              disabled={searchLoading}
+              style={{ background: "#3b82f6", color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer", opacity: searchLoading ? 0.6 : 1 }}
+            >
+              {searchLoading ? "..." : "Buscar"}
+            </button>
+          </div>
+
+          {searchDone && (
+            searchResults.length === 0 ? (
+              <p style={{ fontSize: 13, color: "#94A3B8" }}>Nenhum resultado encontrado.</p>
+            ) : (
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                <thead>
+                  <tr>
+                    {["Nome", "Email", "Status", "Data", "Figurinha", "Link"].map(h => (
+                      <th key={h} style={{ background: "#F8FAFC", borderBottom: "1px solid #E2E8F0", padding: "8px 12px", textAlign: "left", fontWeight: 700, color: "#64748B", fontSize: 11, textTransform: "uppercase", letterSpacing: ".04em" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {searchResults.map(p => (
+                    <tr key={p.id} style={{ borderBottom: "1px solid #F1F5F9" }}>
+                      <td style={{ padding: "8px 12px", color: "#334155", fontWeight: 600 }}>{p.nome || "—"}</td>
+                      <td style={{ padding: "8px 12px", color: "#64748B" }}>{p.email}</td>
+                      <td style={{ padding: "8px 12px" }}>
+                        <span style={{ padding: "2px 8px", borderRadius: 99, fontSize: 10, fontWeight: 700, background: p.status === "entregue" ? "#D1FAE5" : "#FEF3C7", color: p.status === "entregue" ? "#065F46" : "#92400E" }}>
+                          {p.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: "8px 12px", color: "#64748B" }}>
+                        {new Date(p.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                      </td>
+                      <td style={{ padding: "8px 12px" }}>
+                        {p.sticker_url ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <img src={p.sticker_url} alt="figurinha" style={{ width: 32, height: 48, borderRadius: 4, objectFit: "cover", border: "1px solid #E2E8F0" }} />
+                            <a
+                              href={`/api/download?url=${encodeURIComponent(p.sticker_url)}&name=figurinha-${(p.nome || "").toLowerCase().replace(/\s+/g, "-")}`}
+                              style={{ background: "#059669", color: "#fff", borderRadius: 6, padding: "5px 10px", fontSize: 11, fontWeight: 700, textDecoration: "none" }}
+                            >
+                              ⬇ Baixar
+                            </a>
+                          </div>
+                        ) : (
+                          <span style={{ color: "#CBD5E1", fontSize: 11 }}>Sem figurinha</span>
+                        )}
+                      </td>
+                      <td style={{ padding: "8px 12px" }}>
+                        {p.email && (
+                          <button
+                            onClick={() => {
+                              const link = `https://gerarfigurinhas.vercel.app/obrigado?email=${encodeURIComponent(p.email)}`;
+                              navigator.clipboard.writeText(link);
+                            }}
+                            style={{ background: "#6366f1", color: "#fff", border: "none", borderRadius: 6, padding: "5px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
+                          >
+                            🔗 Copiar link
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )
+          )}
+        </div>
+
         {/* Leads table */}
         <div style={{ background: "#fff", borderRadius: 12, padding: 18, boxShadow: "0 1px 3px rgba(0,0,0,.07)", marginBottom: 24, overflowX: "auto" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
@@ -379,6 +479,7 @@ export default function AdminDashboard() {
             </table>
           )}
         </div>
+
 
       </main>
     </div>

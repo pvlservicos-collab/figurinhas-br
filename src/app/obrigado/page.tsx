@@ -8,7 +8,10 @@ async function fetchWithRetry(url: string, attempts = 3): Promise<Response> {
     try {
       const res = await fetch(url);
       if (res.ok) return res;
-    } catch { /* continua tentando */ }
+      if (res.status === 404) throw new Error("not_found"); // não adianta retry
+    } catch (e) {
+      if (e instanceof Error && e.message === "not_found") throw e;
+    }
     if (i < attempts - 1) await new Promise((r) => setTimeout(r, 800 * (i + 1)));
   }
   throw new Error("Falhou após tentativas");
