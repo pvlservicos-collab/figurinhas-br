@@ -28,7 +28,8 @@ export async function GET(req: NextRequest) {
       ORDER BY count DESC
     `,
     sql`
-      SELECT s.session_id, s.email, s.nome, s.step, s.updated_at,
+      SELECT s.session_id, s.email, s.nome, s.step,
+             to_char(s.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at,
              COALESCE(s.cta_clicked, FALSE) as cta_clicked,
              COALESCE(s.obrigado, FALSE) as obrigado,
              p.telefone
@@ -47,7 +48,9 @@ export async function GET(req: NextRequest) {
       FROM pedidos WHERE status IN ('pago','entregue','recuperado')
     `,
     sql`
-      SELECT s.session_id, s.email, s.nome, s.updated_at, p.telefone
+      SELECT s.session_id, s.email, s.nome,
+             to_char(s.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at,
+             p.telefone
       FROM sessions s
       LEFT JOIN LATERAL (
         SELECT telefone FROM pedidos
