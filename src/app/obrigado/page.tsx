@@ -133,7 +133,7 @@ export default function Obrigado() {
       </div>
 
       <div className="w-full max-w-3xl flex flex-col items-center animate-slide-up">
-        <h1 className="text-5xl md:text-7xl font-bold text-copa-blue text-center tracking-[0.1em] mb-4"
+        <h1 className="text-5xl md:text-7xl font-bold text-copa-blue text-center tracking-[0.15em] mb-4"
           style={{ fontFamily: "var(--font-titulo)" }}>
           OBRIGADO!
         </h1>
@@ -151,7 +151,7 @@ export default function Obrigado() {
                     <img src={stickerUrl} alt="Sua figurinha" className="w-full h-auto" />
                   </div>
                   <button onClick={handleDownload}
-                    className="w-full max-w-xs bg-copa-blue text-white font-bold text-base py-4 rounded-2xl shadow-lg hover:bg-copa-blue-hover active:scale-95 transition-all duration-200 cursor-pointer tracking-[0.1em] flex items-center justify-center gap-2"
+                    className="w-full max-w-xs bg-copa-blue text-white font-bold text-base py-4 rounded-2xl shadow-lg hover:bg-copa-blue-hover active:scale-95 transition-all duration-200 cursor-pointer tracking-[0.15em] flex items-center justify-center gap-2"
                     style={{ fontFamily: "var(--font-titulo)" }}>
                     ⬇ BAIXAR MINHA FIGURINHA
                   </button>
@@ -164,10 +164,10 @@ export default function Obrigado() {
           )}
 
           <div className="flex flex-col items-center flex-1 md:order-1">
-            <p className="text-xl text-center leading-relaxed mb-2" style={{ fontFamily: "var(--font-titulo)" }}>
+            <p className="text-3xl font-black text-center leading-relaxed mb-2 tracking-widest" style={{ fontFamily: "var(--font-titulo)" }}>
               Seu pagamento foi confirmado!
             </p>
-            <p className="text-lg text-center leading-relaxed mb-4" style={{ fontFamily: "var(--font-titulo)" }}>
+            <p className="text-base text-center leading-relaxed mb-4" style={{ fontFamily: "var(--font-papernotes)" }}>
               Sua <strong className="text-copa-blue">figurinha personalizada</strong> já está pronta! Você tem <strong className="text-copa-blue">2 opções</strong> para recebê-la:
             </p>
 
@@ -188,7 +188,7 @@ export default function Obrigado() {
 
             {/* Não recebeu? */}
             <div className="w-full bg-white rounded-2xl border-2 border-copa-blue p-5 mb-6">
-              <p className="text-base font-bold text-copa-blue text-center mb-4" style={{ fontFamily: "var(--font-titulo)" }}>
+              <p className="text-3xl font-black text-copa-blue text-center mb-4 tracking-widest" style={{ fontFamily: "var(--font-titulo)" }}>
                 NÃO RECEBEU A FIGURINHA?
               </p>
 
@@ -255,7 +255,7 @@ export default function Obrigado() {
                 try { localStorage.removeItem("figurinha_sticker_id"); } catch { /* ignore */ }
                 try { sessionStorage.removeItem("figurinha_sticker_url"); sessionStorage.removeItem("figurinha_sticker_id"); } catch { /* ignore */ }
               }}
-              className="w-full bg-copa-blue text-copa-white font-bold text-xl py-5 rounded-2xl shadow-lg hover:bg-copa-blue-hover active:scale-95 transition-all duration-200 cursor-pointer tracking-[0.1em] text-center block mb-3"
+              className="w-full bg-copa-blue text-copa-white font-bold text-xl py-5 rounded-2xl shadow-lg hover:bg-copa-blue-hover active:scale-95 transition-all duration-200 cursor-pointer tracking-[0.15em] text-center block mb-3"
               style={{ fontFamily: "var(--font-titulo)" }}>
               CRIAR NOVA FIGURINHA
             </a>
