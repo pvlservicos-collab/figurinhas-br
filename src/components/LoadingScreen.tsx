@@ -109,7 +109,7 @@ export default function LoadingScreen({ title, gifUrl, longWait, startTime }: Lo
         <img
           src={gifUrl}
           alt="Carregando..."
-          className={longWait ? "w-full rounded-2xl object-cover" : "w-48 h-48 rounded-2xl object-cover"}
+          className={longWait ? "w-[65%] rounded-2xl object-cover" : "w-48 h-48 rounded-2xl object-cover"}
         />
 
         {longWait && (
