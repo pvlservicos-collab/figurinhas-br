@@ -170,8 +170,9 @@ export default function Home() {
   };
 
   const [errorTimestamp, setErrorTimestamp] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
-  const generateFigurinha = useCallback(async (retryAfterError?: string) => {
+  const generateFigurinha = useCallback(async (retryAfterError?: string, attempt = 0) => {
     const current = dataRef.current;
     try {
       if (!current.foto) throw new Error("Sem foto");
@@ -191,6 +192,7 @@ export default function Home() {
           altura: current.altura || undefined,
           fotoBase64,
           errorTimestamp: retryAfterError || undefined,
+          retryAttempt: attempt,
         }),
       });
 
@@ -207,15 +209,16 @@ export default function Home() {
       } else {
         console.error("Erro:", result.error);
         setStickerUrl("");
-        // Registrar o momento do erro
         const now = new Date().toISOString();
         setErrorTimestamp(now);
+        setRetryCount(attempt + 1);
       }
     } catch (error) {
       console.error("Erro na geração:", error);
       setStickerUrl("");
       const now = new Date().toISOString();
       setErrorTimestamp(now);
+      setRetryCount(attempt + 1);
     }
 
     setAppStep("result");
@@ -307,7 +310,7 @@ export default function Home() {
           sessionStorage.removeItem("figurinha_sticker_id");
           setGenStartTime(Date.now());
           setAppStep("loading-generate");
-          generateFigurinha(errorTimestamp || undefined);
+          generateFigurinha(errorTimestamp || undefined, retryCount);
         }} />
       )}
     </main>

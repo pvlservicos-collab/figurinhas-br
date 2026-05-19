@@ -1,5 +1,5 @@
 // Módulo centralizado de envio de email
-// Ordem: Hostinger SMTP (principal) → Gmail SMTP (fallback) → Resend (último recurso)
+// Ordem: Resend (principal) → Hostinger SMTP (fallback) → Gmail SMTP (último recurso)
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://gerarfigurinhas.vercel.app";
 
@@ -38,8 +38,31 @@ export async function sendEmail(
   const fileNameBase = customerName.toLowerCase().replace(/\s+/g, "-");
   const subject = "Sua Figurinha da Copa 2026 esta pronta! ⚽";
   const html = buildEmailHtml(customerName, pdfUrl, stickerUrl);
+  const resendFrom = process.env.RESEND_FROM_EMAIL || "Figurinha Copa 2026 <onboarding@resend.dev>";
 
-  // 1. Hostinger SMTP (principal — domínio próprio, sem spam)
+  // 1. Resend (principal)
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const { Resend } = await import("resend");
+      const resend = new Resend(process.env.RESEND_API_KEY);
+      await resend.emails.send({
+        from: resendFrom,
+        to,
+        subject,
+        html,
+        attachments: [
+          { filename: `figurinha-${fileNameBase}.png`, content: Buffer.from(stickerBytes).toString("base64") },
+          { filename: `figurinhas-impressao-${fileNameBase}.pdf`, content: pdfBuffer.toString("base64") },
+        ],
+      });
+      console.log(`Email enviado via Resend para ${to}`);
+      return true;
+    } catch (err) {
+      console.error("Resend falhou:", err instanceof Error ? err.message : err);
+    }
+  }
+
+  // 2. Hostinger SMTP (fallback)
   if (process.env.HOSTINGER_SMTP_HOST && process.env.HOSTINGER_SMTP_USER) {
     try {
       const nodemailer = (await import("nodemailer")).default;
@@ -67,7 +90,7 @@ export async function sendEmail(
     }
   }
 
-  // 2. Gmail SMTP (fallback)
+  // 3. Gmail SMTP (último recurso)
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
     try {
       const nodemailer = (await import("nodemailer")).default;
@@ -90,28 +113,6 @@ export async function sendEmail(
       return true;
     } catch (err) {
       console.error("Gmail falhou:", err instanceof Error ? err.message : err);
-    }
-  }
-
-  // 3. Resend (último recurso)
-  if (process.env.RESEND_API_KEY) {
-    try {
-      const { Resend } = await import("resend");
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      await resend.emails.send({
-        from: "Figurinha Copa 2026 <onboarding@resend.dev>",
-        to,
-        subject,
-        html,
-        attachments: [
-          { filename: `figurinha-${fileNameBase}.png`, content: Buffer.from(stickerBytes).toString("base64") },
-          { filename: `figurinhas-impressao-${fileNameBase}.pdf`, content: pdfBuffer.toString("base64") },
-        ],
-      });
-      console.log(`Email enviado via Resend para ${to}`);
-      return true;
-    } catch (err) {
-      console.error("Resend falhou:", err instanceof Error ? err.message : err);
     }
   }
 

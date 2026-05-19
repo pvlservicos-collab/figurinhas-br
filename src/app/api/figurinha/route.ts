@@ -41,12 +41,13 @@ function sanitizeInput(value: string, maxLen: number): string {
   return value.replace(/[^a-zA-ZÀ-ÿ0-9\s\-'.]/g, "").slice(0, maxLen).trim();
 }
 
-// Pool de API keys — rotaciona se uma falhar (402/429)
+// Pool de API keys — cada clique do cliente usa a próxima key na fila
 function getOpenAIKeys(): string[] {
   const keys: string[] = [];
-  if (process.env.OPENAI_API_KEY) keys.push(process.env.OPENAI_API_KEY);
+  if (process.env.OPENAI_API_KEY)   keys.push(process.env.OPENAI_API_KEY);
   if (process.env.OPENAI_API_KEY_2) keys.push(process.env.OPENAI_API_KEY_2);
   if (process.env.OPENAI_API_KEY_3) keys.push(process.env.OPENAI_API_KEY_3);
+  if (process.env.OPENAI_API_KEY_4) keys.push(process.env.OPENAI_API_KEY_4);
   return keys;
 }
 
@@ -61,14 +62,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Muitas requisições. Aguarde 1 minuto." }, { status: 429 });
   }
 
-  let body: { nome: string; dataNascimento: string; email: string; clube: string; jogadorFavorito: string; peso?: string; altura?: string; fotoBase64: string; errorTimestamp?: string; };
+  let body: { nome: string; dataNascimento: string; email: string; clube: string; jogadorFavorito: string; peso?: string; altura?: string; fotoBase64: string; errorTimestamp?: string; retryAttempt?: number; };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
   }
 
-  const { nome, dataNascimento, email, clube, jogadorFavorito, peso, altura, fotoBase64, errorTimestamp } = body;
+  const { nome, dataNascimento, email, clube, jogadorFavorito, peso, altura, fotoBase64, errorTimestamp, retryAttempt } = body;
   if (!nome || !dataNascimento || !clube || !fotoBase64) {
     console.error("Dados incompletos:", { nome: !!nome, dataNascimento: !!dataNascimento, clube: !!clube, fotoBase64: !!fotoBase64 });
     return NextResponse.json({ error: "Dados incompletos" }, { status: 400 });
@@ -203,52 +204,33 @@ ${pesoSafe || alturaSafe ? `Player stats for reference: ${[alturaSafe ? `height 
 The result must look like a real printed collectible sticker card with a properly proportioned portrait of the person from Image 1.`;
 
   try {
-    console.log("Gerando figurinha...");
+    // Seleciona a key baseado no número de tentativas do cliente — cada retry usa a próxima
+    const keyIdx = typeof retryAttempt === "number" && retryAttempt > 0
+      ? retryAttempt % apiKeys.length
+      : 0;
+    const currentKey = apiKeys[keyIdx];
+    console.log(`Gerando figurinha com key ${keyIdx + 1} de ${apiKeys.length} (tentativa cliente: ${retryAttempt ?? 0})...`);
 
-    // Pool de keys + retry
-    // Estratégia: cada key tem 2 tentativas (1 retry). Se der rate/billing, pula key imediatamente.
-    // Se der outro erro, tenta a próxima key também (não descarta logo).
+    const openai = new OpenAI({ apiKey: currentKey });
     let imageData = null;
 
-    outer: for (let keyIdx = 0; keyIdx < apiKeys.length; keyIdx++) {
-      const currentKey = apiKeys[keyIdx];
-      const openai = new OpenAI({ apiKey: currentKey });
+    try {
+      const fotoFile = await toFile(fotoBufferComprimido, "foto.jpg", { type: "image/jpeg" });
+      const modeloFile = await toFile(modeloBuffer, "modelo.webp", { type: "image/webp" });
 
-      for (let attempt = 0; attempt < 2; attempt++) {
-        if (attempt > 0) {
-          console.log(`Retry (key ${keyIdx + 1}) - aguardando 5s...`);
-          await new Promise(r => setTimeout(r, 5000));
-        }
+      const response = await openai.images.edit({
+        model: "gpt-image-2",
+        image: [fotoFile, modeloFile],
+        prompt,
+        size: "1024x1536",
+      });
 
-        try {
-          const fotoFile = await toFile(fotoBufferComprimido, "foto.jpg", { type: "image/jpeg" });
-          const modeloFile = await toFile(modeloBuffer, "modelo.webp", { type: "image/webp" });
-
-          const response = await openai.images.edit({
-            model: "gpt-image-2",
-            image: [fotoFile, modeloFile],
-            prompt,
-            size: "1024x1536",
-          });
-
-          imageData = response.data?.[0];
-          if (imageData?.b64_json) break outer; // Sucesso — sai de tudo
-        } catch (apiErr: unknown) {
-          const errMsg = apiErr instanceof Error ? apiErr.message : String(apiErr);
-          const isRateOrBilling = errMsg.includes("429") || errMsg.includes("rate") || errMsg.includes("402") || errMsg.includes("insufficient") || errMsg.includes("billing") || errMsg.includes("Billing") || errMsg.includes("quota") || errMsg.includes("credit");
-          console.log(`OpenAI key ${keyIdx + 1} erro tentativa ${attempt + 1}: ${errMsg.slice(0, 120)}`);
-          if (isRateOrBilling) {
-            // Rate limit ou sem crédito → pula para próxima key imediatamente
-            break;
-          }
-          // Outro erro (500, timeout, etc.) → tenta mais 1 vez na mesma key, depois próxima
-          if (attempt === 1) break; // Já tentou 2 vezes, passa para próxima key
-        }
-      }
-
-      if (imageData?.b64_json) break;
-      console.log(`Key ${keyIdx + 1} falhou, tentando próxima...`);
+      imageData = response.data?.[0];
+    } catch (apiErr: unknown) {
+      const errMsg = apiErr instanceof Error ? apiErr.message : String(apiErr);
+      console.log(`OpenAI key ${keyIdx + 1} erro: ${errMsg.slice(0, 120)}`);
     }
+
     if (!imageData?.b64_json) {
       return NextResponse.json({ error: "Falha na geração" }, { status: 422 });
     }

@@ -23,12 +23,12 @@ export async function GET(req: NextRequest) {
         ) THEN TRUE ELSE FALSE END as whats_pendente,
         p.created_at, p.paid_at, p.delivered_at
       FROM pedidos p
-      WHERE p.status IN ('pago','entregue','recuperado') AND (p.nome ILIKE ${searchPattern} OR p.email ILIKE ${searchPattern} OR p.clube ILIKE ${searchPattern} OR p.telefone ILIKE ${searchPattern})
+      WHERE p.sticker_url IS NOT NULL AND (p.nome ILIKE ${searchPattern} OR p.email ILIKE ${searchPattern} OR p.clube ILIKE ${searchPattern} OR p.telefone ILIKE ${searchPattern})
       ORDER BY p.id DESC LIMIT ${limit} OFFSET ${offset}
     `;
     const countResult = await sql`
       SELECT COUNT(*)::int as total FROM pedidos
-      WHERE status IN ('pago','entregue','recuperado') AND (nome ILIKE ${searchPattern} OR email ILIKE ${searchPattern} OR clube ILIKE ${searchPattern} OR telefone ILIKE ${searchPattern})
+      WHERE sticker_url IS NOT NULL AND (nome ILIKE ${searchPattern} OR email ILIKE ${searchPattern} OR clube ILIKE ${searchPattern} OR telefone ILIKE ${searchPattern})
     `;
     totalFiltered = countResult[0].total;
   } else {
