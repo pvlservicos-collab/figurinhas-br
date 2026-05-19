@@ -194,7 +194,7 @@ export default function AdminDashboard() {
   const KPI_CARDS = [
     { label: "Sessões",   value: totalSessions,         sub: "com email capturado",  color: "#0F172A" },
     { label: "CTA",       value: ctaCount,              sub: "clicaram em comprar",  color: "#a855f7" },
-    { label: "Compras",   value: data.obrigados.length, sub: "página de obrigado",   color: "#059669" },
+    { label: "Compras",   value: data.pagos,            sub: "pagamentos confirmados", color: "#059669" },
     { label: "Taxa CTA",  value: `${taxaCTA}%`,         sub: "sessões → compra",     color: "#E2642A" },
   ];
 

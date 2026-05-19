@@ -2,19 +2,35 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 
 export async function GET(req: NextRequest) {
-  const id = req.nextUrl.searchParams.get("id");
-  if (!id || !/^[0-9a-f-]{36}$/.test(id)) {
-    return NextResponse.json({ error: "ID inválido" }, { status: 400 });
-  }
+  const id    = req.nextUrl.searchParams.get("id");
+  const email = req.nextUrl.searchParams.get("email");
 
   const sql = getDb();
   let rows: Record<string, string>[] = [];
+
   try {
-    rows = await sql`
-      SELECT sticker_url FROM pedidos
-      WHERE sticker_id = ${id}
-      LIMIT 1
-    `;
+    if (email) {
+      const emailSafe = email.trim().toLowerCase().slice(0, 255);
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailSafe)) {
+        return NextResponse.json({ error: "Email inválido" }, { status: 400 });
+      }
+      rows = await sql`
+        SELECT sticker_url FROM pedidos
+        WHERE email = ${emailSafe} AND sticker_url IS NOT NULL
+        ORDER BY created_at DESC LIMIT 1
+      `;
+    } else if (id) {
+      if (!/^[0-9a-f-]{36}$/.test(id)) {
+        return NextResponse.json({ error: "ID inválido" }, { status: 400 });
+      }
+      rows = await sql`
+        SELECT sticker_url FROM pedidos
+        WHERE sticker_id = ${id}
+        LIMIT 1
+      `;
+    } else {
+      return NextResponse.json({ error: "Informe id ou email" }, { status: 400 });
+    }
   } catch {
     return NextResponse.json({ error: "Erro no banco" }, { status: 500 });
   }

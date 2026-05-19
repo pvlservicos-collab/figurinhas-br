@@ -564,7 +564,7 @@ export async function POST(req: NextRequest) {
     // Fallback: buscar o último pedido pendente por email
     const rows = await sql`
       SELECT sticker_id, sticker_url FROM pedidos
-      WHERE (email = ${customerEmail} OR status = 'pendente') AND sticker_url IS NOT NULL
+      WHERE email = ${customerEmail} AND sticker_url IS NOT NULL
       ORDER BY created_at DESC LIMIT 1
     `;
     if (rows.length > 0) {

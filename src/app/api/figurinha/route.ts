@@ -55,8 +55,6 @@ export async function POST(req: NextRequest) {
   if (apiKeys.length === 0) {
     return NextResponse.json({ error: "Serviço indisponível" }, { status: 500 });
   }
-  const apiKey = apiKeys[0]; // Começa pela primeira
-
   // Rate limit por IP
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown";
   if (!checkRateLimit(ip, 10, 60000)) {
