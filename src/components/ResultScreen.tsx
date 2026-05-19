@@ -165,7 +165,7 @@ export default function ResultScreen({ stickerUrl, stickerId, onRetry, onCheckou
             className="text-base text-gray-600 text-center mb-6"
             style={{ fontFamily: "var(--font-papernotes)" }}
           >
-            Receba o arquivo <strong>DIGITAL</strong> para a <strong>IMPRESSÃO</strong>
+            Receba o arquivo digital para a impressão e participe do sorteio. Leia o regulamento em seu e-mail.
           </p>
 
           {/* Preço centralizado com brilho */}

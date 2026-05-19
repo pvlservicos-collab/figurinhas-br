@@ -6,6 +6,7 @@ import QuizStep from "@/components/QuizStep";
 import type { QuizData } from "@/components/QuizStep";
 import LoadingScreen from "@/components/LoadingScreen";
 import ResultScreen from "@/components/ResultScreen";
+import ConfirmScreen from "@/components/ConfirmScreen";
 
 function compressToBase64(file: File, maxSize = 512, quality = 0.7): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -38,7 +39,7 @@ const initialData: QuizData = {
   foto: null,
 };
 
-type AppStep = "hero" | "quiz-1" | "loading-photo" | "quiz-2" | "quiz-3" | "loading-generate" | "result";
+type AppStep = "hero" | "quiz-1" | "loading-photo" | "quiz-2" | "quiz-3" | "confirm" | "loading-generate" | "result";
 
 export default function Home() {
   const [appStep, setAppStep] = useState<AppStep>(() => {
@@ -59,6 +60,7 @@ export default function Home() {
     return "";
   });
   const [genStartTime, setGenStartTime] = useState(0);
+  const [fotoPreviewUrl, setFotoPreviewUrl] = useState<string | null>(null);
   const dataRef = useRef(data);
   dataRef.current = data;
   const sessionRef = useRef<string>("");
@@ -151,6 +153,10 @@ export default function Home() {
 
   const updateData = (fields: Partial<QuizData>) => {
     setData((prev) => ({ ...prev, ...fields }));
+    if (fields.foto) {
+      const url = URL.createObjectURL(fields.foto);
+      setFotoPreviewUrl(url);
+    }
   };
 
   const [errorTimestamp, setErrorTimestamp] = useState<string | null>(null);
@@ -214,9 +220,7 @@ export default function Home() {
       setQuizStep(3);
       setAppStep("quiz-3");
     } else if (quizStep === 3) {
-      setGenStartTime(Date.now());
-      setAppStep("loading-generate");
-      generateFigurinha();
+      setAppStep("confirm");
     }
   }, [quizStep, generateFigurinha]);
 
@@ -257,6 +261,22 @@ export default function Home() {
         <LoadingScreen
           title="CARREGANDO FOTO"
           gifUrl="https://media4.giphy.com/media/WxDZ77xhPXf3i/giphy.gif"
+        />
+      )}
+
+      {appStep === "confirm" && (
+        <ConfirmScreen
+          data={data}
+          fotoPreviewUrl={fotoPreviewUrl}
+          onConfirm={() => {
+            setGenStartTime(Date.now());
+            setAppStep("loading-generate");
+            generateFigurinha();
+          }}
+          onBack={() => {
+            setQuizStep(3);
+            setAppStep("quiz-3");
+          }}
         />
       )}
 
