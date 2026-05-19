@@ -113,9 +113,17 @@ export default function LoadingScreen({ title, gifUrl, longWait, startTime }: Lo
         />
 
         {longWait && (
-          <p className="text-base font-bold text-copa-blue text-center leading-snug" style={{ fontFamily: "var(--font-papernotes)" }}>
-            Adquira sua figurinha HOJE e concorra a 1000 reais<br />Sorteio será realizado dia 11/06/2026
-          </p>
+          <div className="text-center leading-snug">
+            <p className="text-base font-bold text-copa-blue" style={{ fontFamily: "var(--font-papernotes)" }}>
+              Adquira sua figurinha HOJE e concorra a
+            </p>
+            <p className="text-4xl font-black text-copa-green my-1" style={{ fontFamily: "var(--font-titulo)" }}>
+              MIL REAIS
+            </p>
+            <p className="text-base font-bold text-copa-blue" style={{ fontFamily: "var(--font-papernotes)" }}>
+              no dia 11/06/2026 início dos jogos.
+            </p>
+          </div>
         )}
 
         <p
