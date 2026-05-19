@@ -117,6 +117,13 @@ export default function Home() {
       if (appStep === "loading-generate") {
         e.preventDefault();
         const { email, nome } = dataRef.current;
+        // Rastrear abandono durante geração no funil
+        if (sessionRef.current) {
+          navigator.sendBeacon(
+            "/api/track",
+            new Blob([JSON.stringify({ session_id: sessionRef.current, step: "saiu_gerando", email: email || undefined, nome: nome || undefined })], { type: "application/json" })
+          );
+        }
         if (email) {
           navigator.sendBeacon(
             "/api/abandono/loading-exit",

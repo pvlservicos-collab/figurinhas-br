@@ -19,7 +19,7 @@ export default function ResultScreen({ stickerUrl, stickerId, onRetry, onCheckou
     sessionStorage.removeItem("figurinha_sticker_url");
     sessionStorage.removeItem("figurinha_sticker_id");
     try { localStorage.setItem("figurinha_sticker_id", stickerId); } catch { /* ignore */ }
-    const checkoutUrl = process.env.NEXT_PUBLIC_CHECKOUT_URL || "https://pay.onprofit.com.br/5Sh0FbF4?off=3wCdRS";
+    const checkoutUrl = process.env.NEXT_PUBLIC_CHECKOUT_URL || "https://checkout.figurinhadacopadomundo.com/VCCL1O8SD2DW";
 
     // Capturar UTMs da URL original e cookies pra passar pro checkout
     const params = new URLSearchParams(window.location.search);

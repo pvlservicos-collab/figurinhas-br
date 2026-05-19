@@ -207,18 +207,19 @@ The result must look like a real printed collectible sticker card with a properl
   try {
     console.log("Gerando figurinha...");
 
-    // Pool de keys + retry com backoff
+    // Pool de keys + retry
+    // Estratégia: cada key tem 2 tentativas (1 retry). Se der rate/billing, pula key imediatamente.
+    // Se der outro erro, tenta a próxima key também (não descarta logo).
     let imageData = null;
-    const BACKOFF_MS = [0, 10000, 20000];
 
-    for (let keyIdx = 0; keyIdx < apiKeys.length; keyIdx++) {
+    outer: for (let keyIdx = 0; keyIdx < apiKeys.length; keyIdx++) {
       const currentKey = apiKeys[keyIdx];
       const openai = new OpenAI({ apiKey: currentKey });
 
-      for (let attempt = 0; attempt < 3; attempt++) {
+      for (let attempt = 0; attempt < 2; attempt++) {
         if (attempt > 0) {
-          console.log(`Retry ${attempt}/2 (key ${keyIdx + 1}) - aguardando ${BACKOFF_MS[attempt] / 1000}s...`);
-          await new Promise(r => setTimeout(r, BACKOFF_MS[attempt]));
+          console.log(`Retry (key ${keyIdx + 1}) - aguardando 5s...`);
+          await new Promise(r => setTimeout(r, 5000));
         }
 
         try {
@@ -233,24 +234,22 @@ The result must look like a real printed collectible sticker card with a properl
           });
 
           imageData = response.data?.[0];
-          if (imageData?.b64_json) break;
+          if (imageData?.b64_json) break outer; // Sucesso — sai de tudo
         } catch (apiErr: unknown) {
           const errMsg = apiErr instanceof Error ? apiErr.message : String(apiErr);
-          // 429 = rate limit, 402 = sem créditos → tenta próxima key
-          if (errMsg.includes("429") || errMsg.includes("rate") || errMsg.includes("402") || errMsg.includes("insufficient") || errMsg.includes("billing") || errMsg.includes("Billing") || errMsg.includes("quota") || errMsg.includes("credit")) {
-            console.log(`OpenAI key ${keyIdx + 1} erro (${errMsg.includes("402") ? "sem creditos" : "rate limit"}) tentativa ${attempt + 1}`);
-            if (attempt === 2) break; // Sai do retry, tenta próxima key
-            continue;
+          const isRateOrBilling = errMsg.includes("429") || errMsg.includes("rate") || errMsg.includes("402") || errMsg.includes("insufficient") || errMsg.includes("billing") || errMsg.includes("Billing") || errMsg.includes("quota") || errMsg.includes("credit");
+          console.log(`OpenAI key ${keyIdx + 1} erro tentativa ${attempt + 1}: ${errMsg.slice(0, 120)}`);
+          if (isRateOrBilling) {
+            // Rate limit ou sem crédito → pula para próxima key imediatamente
+            break;
           }
-          throw apiErr;
+          // Outro erro (500, timeout, etc.) → tenta mais 1 vez na mesma key, depois próxima
+          if (attempt === 1) break; // Já tentou 2 vezes, passa para próxima key
         }
       }
 
-      if (imageData?.b64_json) {
-        console.log(`Figurinha gerada com key ${keyIdx + 1}`);
-        break;
-      }
-      console.log(`Key ${keyIdx + 1} esgotada, tentando próxima...`);
+      if (imageData?.b64_json) break;
+      console.log(`Key ${keyIdx + 1} falhou, tentando próxima...`);
     }
     if (!imageData?.b64_json) {
       return NextResponse.json({ error: "Falha na geração" }, { status: 422 });

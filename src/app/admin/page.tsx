@@ -23,14 +23,15 @@ interface FunilData {
 }
 
 const FUNNEL_STEPS = [
-  { key: "quiz_1",     label: "Card 2 — Nome/foto",    color: "#3b82f6" },
-  { key: "quiz_2",     label: "Card 3 — Clube",        color: "#3b82f6" },
-  { key: "quiz_3",     label: "Card 4 — Email",        color: "#3b82f6" },
-  { key: "confirm",    label: "Confira seus dados",    color: "#06b6d4" },
-  { key: "loading",    label: "Gerou figurinha",       color: "#eab308" },
-  { key: "result_ok",  label: "Viu preview c/ preço",  color: "#f97316" },
-  { key: "result_error", label: "Erro na geração",     color: "#ef4444" },
-  { key: "checkout",   label: "Clicou em comprar",     color: "#a855f7" },
+  { key: "quiz_1",       label: "Card 2 — Nome/foto",       color: "#3b82f6" },
+  { key: "quiz_2",       label: "Card 3 — Clube",           color: "#3b82f6" },
+  { key: "quiz_3",       label: "Card 4 — Email",           color: "#3b82f6" },
+  { key: "confirm",      label: "Confira seus dados",       color: "#06b6d4" },
+  { key: "loading",      label: "Gerou figurinha",          color: "#eab308" },
+  { key: "saiu_gerando", label: "Saiu durante geração",     color: "#f97316" },
+  { key: "result_ok",    label: "Viu preview c/ preço",     color: "#22c55e" },
+  { key: "result_error", label: "Erro na geração",          color: "#ef4444" },
+  { key: "checkout",     label: "Clicou em comprar",        color: "#a855f7" },
 ];
 
 const STEP_LABEL: Record<string, string> = {
@@ -39,6 +40,7 @@ const STEP_LABEL: Record<string, string> = {
   quiz_3:       "Card 4 — Email",
   confirm:      "Confira seus dados",
   loading:      "Gerou figurinha",
+  saiu_gerando: "Saiu durante geração",
   result_ok:    "Viu preview c/ preço",
   result_error: "Erro na geração",
   checkout:     "Clicou em comprar",
