@@ -36,6 +36,8 @@ const initialData: QuizData = {
   email: "",
   clube: "",
   jogadorFavorito: "",
+  peso: "",
+  altura: "",
   foto: null,
 };
 
@@ -178,6 +180,8 @@ export default function Home() {
           email: current.email,
           clube: current.clube,
           jogadorFavorito: current.jogadorFavorito,
+          peso: current.peso || undefined,
+          altura: current.altura || undefined,
           fotoBase64,
           errorTimestamp: retryAfterError || undefined,
         }),

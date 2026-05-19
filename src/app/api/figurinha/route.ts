@@ -63,14 +63,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Muitas requisições. Aguarde 1 minuto." }, { status: 429 });
   }
 
-  let body: { nome: string; dataNascimento: string; email: string; clube: string; jogadorFavorito: string; peso?: string; altura?: string; fotoBase64: string; errorTimestamp?: string };
+  let body: { nome: string; dataNascimento: string; email: string; clube: string; jogadorFavorito: string; peso?: string; altura?: string; fotoBase64: string; errorTimestamp?: string; };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
   }
 
-  const { nome, dataNascimento, email, clube, jogadorFavorito, fotoBase64, errorTimestamp } = body;
+  const { nome, dataNascimento, email, clube, jogadorFavorito, peso, altura, fotoBase64, errorTimestamp } = body;
   if (!nome || !dataNascimento || !clube || !fotoBase64) {
     console.error("Dados incompletos:", { nome: !!nome, dataNascimento: !!dataNascimento, clube: !!clube, fotoBase64: !!fotoBase64 });
     return NextResponse.json({ error: "Dados incompletos" }, { status: 400 });
@@ -169,7 +169,13 @@ export async function POST(req: NextRequest) {
 
   const nomeUpper = nomeSafe.toUpperCase();
   const clubeFormatted = clubeSafe.toUpperCase();
-  const infoLine = formatBirthDate(dataNascimento);
+  const pesoSafe  = peso  ? sanitizeInput(peso,  10) : null;
+  const alturaSafe = altura ? sanitizeInput(altura, 10) : null;
+  const infoLine = [
+    formatBirthDate(dataNascimento),
+    alturaSafe ? `${alturaSafe} m` : null,
+    pesoSafe   ? `${pesoSafe} kg` : null,
+  ].filter(Boolean).join(" | ");
 
   // Prompt com dados sanitizados entre delimitadores
   const prompt = `You are given two images:
@@ -194,6 +200,7 @@ INSTRUCTIONS:
 [NAME]: ${nomeUpper}
 [INFO]: ${infoLine}
 [CLUB]: ${clubeFormatted}
+${pesoSafe || alturaSafe ? `Player stats for reference: ${[alturaSafe ? `height ${alturaSafe} cm` : null, pesoSafe ? `weight ${pesoSafe} kg` : null].filter(Boolean).join(", ")}.` : ""}
 
 The result must look like a real printed collectible sticker card with a properly proportioned portrait of the person from Image 1.`;
 

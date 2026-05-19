@@ -21,6 +21,8 @@ export default function ConfirmScreen({ data, fotoPreviewUrl, onConfirm, onBack 
     { label: "EMAIL",  value: data.email || "—" },
     { label: "CLUBE",  value: data.clube || "—" },
     { label: "DATA",   value: formatDate(data.dataNascimento) },
+    ...(data.peso   ? [{ label: "PESO",   value: `${data.peso} kg` }]   : []),
+    ...(data.altura ? [{ label: "ALTURA", value: `${data.altura} cm` }] : []),
   ];
 
   return (

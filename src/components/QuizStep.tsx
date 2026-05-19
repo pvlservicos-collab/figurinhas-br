@@ -8,6 +8,8 @@ export interface QuizData {
   email: string;
   clube: string;
   jogadorFavorito: string;
+  peso: string;
+  altura: string;
   foto: File | null;
 }
 
@@ -304,6 +306,38 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
               <p className="text-base mt-1 opacity-70" style={{ fontFamily: "var(--font-papernotes)" }}>
                 O clube do coração e os dados pra figurinha
               </p>
+            </div>
+
+            {/* Peso e Altura */}
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <label className="block text-lg font-bold mb-1 text-copa-blue" style={{ fontFamily: "var(--font-titulo)" }}>
+                  PESO (kg)
+                </label>
+                <input
+                  type="number"
+                  value={data.peso}
+                  onChange={(e) => updateData({ peso: e.target.value })}
+                  placeholder="Ex: 70"
+                  min={1} max={300}
+                  className="w-full px-4 py-4 text-lg border-2 border-gray-200 rounded-xl focus:border-copa-blue focus:outline-none transition-colors placeholder:text-gray-400"
+                  style={{ fontFamily: "var(--font-papernotes)" }}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-lg font-bold mb-1 text-copa-blue" style={{ fontFamily: "var(--font-titulo)" }}>
+                  ALTURA (cm)
+                </label>
+                <input
+                  type="number"
+                  value={data.altura}
+                  onChange={(e) => updateData({ altura: e.target.value })}
+                  placeholder="Ex: 175"
+                  min={1} max={300}
+                  className="w-full px-4 py-4 text-lg border-2 border-gray-200 rounded-xl focus:border-copa-blue focus:outline-none transition-colors placeholder:text-gray-400"
+                  style={{ fontFamily: "var(--font-papernotes)" }}
+                />
+              </div>
             </div>
 
             {/* Clube */}
