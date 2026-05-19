@@ -108,7 +108,7 @@ export default function ResultScreen({ stickerUrl, stickerId, onRetry, onCheckou
         <div className="flex flex-col items-center w-full max-w-sm animate-slide-up">
           {/* Preview da figurinha com marca d'água */}
           <div
-            className="relative w-44 md:w-52 rounded-xl overflow-hidden shadow-2xl border-3 border-copa-blue mb-6"
+            className="relative w-56 md:w-64 rounded-xl overflow-hidden shadow-2xl border-3 border-copa-blue mb-6"
             onContextMenu={(e) => e.preventDefault()}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -179,11 +179,17 @@ export default function ResultScreen({ stickerUrl, stickerId, onRetry, onCheckou
           {/* Botão */}
           <button
             onClick={handleCheckout}
-            className="w-full bg-copa-blue text-copa-white font-bold text-xl md:text-2xl py-5 rounded-2xl
-              shadow-lg hover:bg-copa-blue-hover active:scale-95 transition-all duration-200 cursor-pointer tracking-[0.15em]"
-            style={{ fontFamily: "var(--font-titulo)" }}
+            className="w-full text-white font-bold text-xl md:text-2xl py-5 rounded-2xl
+              active:scale-95 transition-all duration-200 cursor-pointer tracking-[0.15em] relative overflow-hidden"
+            style={{
+              fontFamily: "var(--font-titulo)",
+              background: "linear-gradient(135deg, #002395 0%, #0040CC 50%, #002395 100%)",
+              boxShadow: "0 6px 24px rgba(0,35,149,0.45), inset 0 1px 0 rgba(255,255,255,0.15)",
+            }}
           >
-            RECEBER MINHA FIGURINHA
+            <span className="relative z-10 flex items-center justify-center gap-2">
+              ⚽ RECEBER MINHA FIGURINHA
+            </span>
           </button>
         </div>
       )}
