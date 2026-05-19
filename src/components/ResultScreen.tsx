@@ -165,7 +165,7 @@ export default function ResultScreen({ stickerUrl, stickerId, onRetry, onCheckou
             className="text-base text-gray-600 text-center mb-6"
             style={{ fontFamily: "var(--font-papernotes)" }}
           >
-            Receba o arquivo digital para a impressão e participe do sorteio. Leia o regulamento em seu e-mail.
+            Adquira sua figurinha HOJE e concorra a 1000 reais<br />Sorteio será realizado dia 11/06/2026
           </p>
 
           {/* Preço centralizado com brilho */}

@@ -114,8 +114,7 @@ export default function LoadingScreen({ title, gifUrl, longWait, startTime }: Lo
 
         {longWait && (
           <p className="text-base font-bold text-copa-blue text-center leading-snug" style={{ fontFamily: "var(--font-papernotes)" }}>
-            Adquira sua figurinha HOJE e concorra a{" "}
-            <span className="text-lg" style={{ fontFamily: "var(--font-titulo)" }}>500 REAIS</span>
+            Adquira sua figurinha HOJE e concorra a 1000 reais<br />Sorteio será realizado dia 11/06/2026
           </p>
         )}
 
