@@ -29,7 +29,7 @@ export default function Hero({ onStart }: HeroProps) {
         >
           <div className="relative w-full h-full">
             <Image
-              src="/figurinha-helena.png"
+              src="/figurinha-helena.webp"
               alt="Figurinha Helena"
               fill
               className="object-cover"
@@ -51,8 +51,8 @@ export default function Hero({ onStart }: HeroProps) {
         >
           <div className="relative w-full h-full">
             <Image
-              src="/figurinha-miguel.png"
-              alt="Figurinha Miguel"
+              src="/figurinha-arthur.webp"
+              alt="Figurinha Arthur"
               fill
               className="object-cover"
               sizes="(max-width: 768px) 176px, 240px"
@@ -73,7 +73,7 @@ export default function Hero({ onStart }: HeroProps) {
         >
           <div className="relative w-full h-full">
             <Image
-              src="/figurinha-helena.png"
+              src="/figurinha-helena.webp"
               alt="Figurinha Helena"
               fill
               className="object-cover"

@@ -82,7 +82,7 @@ export default function Obrigado() {
           style={{ transform: "rotate(-8deg)", animation: "wiggle 5.5s ease-in-out infinite" }}
         >
           <div className="relative w-full h-full">
-            <Image src="/figurinha-helena.png" alt="Figurinha Helena" fill className="object-cover" sizes="96px" />
+            <Image src="/figurinha-helena.webp" alt="Figurinha Helena" fill className="object-cover" sizes="96px" />
             <div className="absolute inset-0 shine-effect" />
           </div>
         </div>
@@ -91,7 +91,7 @@ export default function Obrigado() {
           style={{ animation: "wiggle 5.5s ease-in-out infinite 0.5s" }}
         >
           <div className="relative w-full h-full">
-            <Image src="/figurinha-miguel.png" alt="Figurinha Miguel" fill className="object-cover" sizes="128px" />
+            <Image src="/figurinha-arthur.webp" alt="Figurinha Arthur" fill className="object-cover" sizes="128px" />
             <div className="absolute inset-0 shine-effect" style={{ animationDelay: "1s" }} />
           </div>
         </div>
@@ -100,7 +100,7 @@ export default function Obrigado() {
           style={{ transform: "rotate(8deg)", animation: "wiggle-down 5.5s ease-in-out infinite 1s" }}
         >
           <div className="relative w-full h-full">
-            <Image src="/figurinha-helena.png" alt="Figurinha Helena" fill className="object-cover" sizes="96px" />
+            <Image src="/figurinha-helena.webp" alt="Figurinha Helena" fill className="object-cover" sizes="96px" />
             <div className="absolute inset-0 shine-effect" style={{ animationDelay: "2s" }} />
           </div>
         </div>
