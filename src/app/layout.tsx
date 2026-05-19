@@ -5,7 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Sua Figurinha Panini da Copa do Mundo 2026 | Crie agora",
   description:
-    "Crie sua figurinha Panini personalizada da Copa do Mundo 2026! Sua foto com o estilo dos campeões. Arquivo digital por apenas €2,99.",
+    "Crie sua figurinha Panini personalizada da Copa do Mundo 2026! Sua foto com o estilo dos campeões. Arquivo digital por apenas R$12,90.",
   robots: "index, follow",
   openGraph: {
     title: "Sua Figurinha Panini da Copa do Mundo 2026",

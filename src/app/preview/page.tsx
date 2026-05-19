@@ -77,7 +77,7 @@ function PreviewContent() {
           className="text-5xl md:text-6xl text-copa-green text-center mb-6 shine-effect"
           style={{ fontFamily: "'Montserrat', Arial Black, sans-serif", fontWeight: 900 }}
         >
-          €2,99
+          R$12,90
         </p>
 
         <button
