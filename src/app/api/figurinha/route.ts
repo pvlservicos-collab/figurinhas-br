@@ -280,12 +280,13 @@ The result must look like a real printed collectible sticker card. The portrait 
 
     const createPreview = async (): Promise<Buffer | null> => {
       try {
-        const resizedBuf = await sharp(stickerBuffer).resize(400).toBuffer();
-        const meta = await sharp(resizedBuf).metadata();
-        const w = meta.width || 400;
-        const h = meta.height || 600;
-        const watermarkSvg = Buffer.from(`<svg width="${w}" height="${h}"><defs><pattern id="wm" x="0" y="0" width="200" height="120" patternUnits="userSpaceOnUse" patternTransform="rotate(-30)"><text x="100" y="40" font-family="Arial" font-size="22" fill="rgba(255,255,255,0.45)" font-weight="900" text-anchor="middle">PREVIEW</text><text x="10" y="70" font-family="Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.3)">minha-figurinha-copa2026</text></pattern></defs><rect width="100%" height="100%" fill="url(#wm)"/></svg>`);
-        return await sharp(resizedBuf).composite([{ input: watermarkSvg, blend: "over" }]).jpeg({ quality: 60 }).toBuffer();
+        // 1024x1536 → resize 400 → 400x600 (ratio 2:3 fixo)
+        const watermarkSvg = Buffer.from(`<svg width="400" height="600"><defs><pattern id="wm" x="0" y="0" width="200" height="120" patternUnits="userSpaceOnUse" patternTransform="rotate(-30)"><text x="100" y="40" font-family="Arial" font-size="22" fill="rgba(255,255,255,0.45)" font-weight="900" text-anchor="middle">PREVIEW</text><text x="10" y="70" font-family="Arial, sans-serif" font-size="14" fill="rgba(255,255,255,0.3)">minha-figurinha-copa2026</text></pattern></defs><rect width="100%" height="100%" fill="url(#wm)"/></svg>`);
+        return await sharp(stickerBuffer)
+          .resize(400)
+          .composite([{ input: watermarkSvg, blend: "over" }])
+          .jpeg({ quality: 60 })
+          .toBuffer();
       } catch { return null; }
     };
 
