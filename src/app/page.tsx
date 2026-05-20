@@ -33,7 +33,7 @@ function compressToBase64(file: File, maxSize = 512, quality = 0.7): Promise<str
 const initialData: QuizData = {
   nome: "",
   dataNascimento: "",
-  email: "",
+  telefone: "",
   clube: "",
   jogadorFavorito: "",
   peso: "",
@@ -101,11 +101,11 @@ export default function Home() {
     };
     const s = stepMap[appStep];
     if (!s || !sessionRef.current) return;
-    const { email, nome } = dataRef.current;
+    const { telefone, nome } = dataRef.current;
     navigator.sendBeacon(
       "/api/track",
       new Blob(
-        [JSON.stringify({ session_id: sessionRef.current, step: s, email: email || undefined, nome: nome || undefined })],
+        [JSON.stringify({ session_id: sessionRef.current, step: s, email: telefone || undefined, nome: nome || undefined })],
         { type: "application/json" }
       )
     );
@@ -116,18 +116,11 @@ export default function Home() {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (appStep === "loading-generate") {
         e.preventDefault();
-        const { email, nome } = dataRef.current;
-        // Rastrear abandono durante geração no funil
+        const { telefone, nome } = dataRef.current;
         if (sessionRef.current) {
           navigator.sendBeacon(
             "/api/track",
-            new Blob([JSON.stringify({ session_id: sessionRef.current, step: "saiu_gerando", email: email || undefined, nome: nome || undefined })], { type: "application/json" })
-          );
-        }
-        if (email) {
-          navigator.sendBeacon(
-            "/api/abandono/loading-exit",
-            new Blob([JSON.stringify({ email, nome })], { type: "application/json" })
+            new Blob([JSON.stringify({ session_id: sessionRef.current, step: "saiu_gerando", email: telefone || undefined, nome: nome || undefined })], { type: "application/json" })
           );
         }
       }
@@ -185,7 +178,7 @@ export default function Home() {
         body: JSON.stringify({
           nome: current.nome,
           dataNascimento: current.dataNascimento,
-          email: current.email,
+          telefone: current.telefone,
           clube: current.clube,
           jogadorFavorito: current.jogadorFavorito,
           peso: current.peso || undefined,

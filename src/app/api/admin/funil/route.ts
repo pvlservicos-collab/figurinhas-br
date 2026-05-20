@@ -1,33 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 
+function periodToInterval(period: string): string | null {
+  const hourMatch = period.match(/^(\d+)h$/);
+  if (hourMatch) return `${hourMatch[1]} hours`;
+  if (period === "today") return "1 day";   // aproximado; cobre últimas 24h
+  if (period === "7d")    return "7 days";
+  if (period === "30d")   return "30 days";
+  return null; // "all" — sem filtro
+}
+
 export async function GET(req: NextRequest) {
   const sql = getDb();
   const { searchParams } = new URL(req.url);
   const period = searchParams.get("period") || "all";
 
-  let cutoff: Date | null = null;
-  const now = new Date();
-  const hourMatch = period.match(/^(\d+)h$/);
-  if (hourMatch) {
-    const h = parseInt(hourMatch[1]);
-    const d = new Date(now); d.setHours(d.getHours() - h); cutoff = d;
-  } else if (period === "today") {
-    cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  } else if (period === "7d") {
-    const d = new Date(now); d.setDate(d.getDate() - 7); cutoff = d;
-  } else if (period === "30d") {
-    const d = new Date(now); d.setDate(d.getDate() - 30); cutoff = d;
-  }
+  // "today" usa meia-noite local; os demais usam intervalo relativo
+  const useToday = period === "today";
+  const interval = periodToInterval(period);
 
-  const pf  = cutoff ? sql`AND s.updated_at >= ${cutoff}` : sql``;
-  const pf2 = cutoff ? sql`AND updated_at >= ${cutoff}`   : sql``;
+  // Fragmentos SQL reutilizáveis
+  const pfSession = interval
+    ? useToday
+      ? sql`AND s.updated_at >= (NOW() AT TIME ZONE 'America/Sao_Paulo')::date`
+      : sql`AND s.updated_at >= NOW() - INTERVAL ${interval}`
+    : sql``;
+
+  const pfSimple = interval
+    ? useToday
+      ? sql`AND updated_at >= (NOW() AT TIME ZONE 'America/Sao_Paulo')::date`
+      : sql`AND updated_at >= NOW() - INTERVAL ${interval}`
+    : sql``;
 
   const [funnel, leads, pagos, obrigados, daily] = await Promise.all([
     sql`
       SELECT step, COUNT(*)::int as count
       FROM sessions
-      WHERE email IS NOT NULL ${pf2}
+      WHERE email IS NOT NULL ${pfSimple}
       GROUP BY step
       ORDER BY count DESC
     `,
@@ -36,32 +45,33 @@ export async function GET(req: NextRequest) {
              to_char(s.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at,
              COALESCE(s.cta_clicked, FALSE) as cta_clicked,
              COALESCE(s.obrigado, FALSE) as obrigado,
-             p.telefone
+             COALESCE(p.telefone, s.email) as telefone
       FROM sessions s
       LEFT JOIN LATERAL (
         SELECT telefone FROM pedidos
-        WHERE email = s.email AND telefone IS NOT NULL
+        WHERE (telefone = s.email OR email = s.email) AND telefone IS NOT NULL
         ORDER BY created_at DESC LIMIT 1
       ) p ON true
-      WHERE s.email IS NOT NULL ${pf}
+      WHERE s.email IS NOT NULL ${pfSession}
       ORDER BY s.updated_at DESC
       LIMIT 1000
     `,
     sql`
       SELECT COUNT(*)::int as count
       FROM pedidos WHERE status IN ('pago','entregue','recuperado')
+      ${pfSimple}
     `,
     sql`
       SELECT s.session_id, s.email, s.nome,
              to_char(s.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') as updated_at,
-             p.telefone
+             COALESCE(p.telefone, s.email) as telefone
       FROM sessions s
       LEFT JOIN LATERAL (
         SELECT telefone FROM pedidos
-        WHERE email = s.email AND telefone IS NOT NULL
+        WHERE (telefone = s.email OR email = s.email) AND telefone IS NOT NULL
         ORDER BY created_at DESC LIMIT 1
       ) p ON true
-      WHERE s.obrigado = TRUE ${pf}
+      WHERE s.obrigado = TRUE ${pfSession}
       ORDER BY s.updated_at DESC
       LIMIT 500
     `,

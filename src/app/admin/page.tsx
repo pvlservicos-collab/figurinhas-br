@@ -217,7 +217,7 @@ export default function AdminDashboard() {
     const rows = [
       ["Nome", "Email", "Telefone", "Último card", "Clicou comprar", "Data"].join(","),
       ...data.leads.map(l => [
-        l.nome || "", l.email, l.telefone || "",
+        l.nome || "", l.telefone || l.email,
         STEP_LABEL[l.step] || l.step,
         l.cta_clicked ? "Sim" : "Não",
         new Date(l.updated_at).toLocaleString("pt-BR"),
@@ -487,7 +487,7 @@ export default function AdminDashboard() {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, minWidth: 600 }}>
             <thead>
               <tr>
-                {["Data", "Nome", "Email", "Telefone", "Último Card", "CTA", ""].map(h => (
+                {["Data", "Nome", "Telefone", "Último Card", "CTA", ""].map(h => (
                   <th key={h} style={{ background: "#F8FAFC", borderBottom: "1px solid #E2E8F0", padding: "8px 12px", textAlign: "left", fontWeight: 700, color: "#64748B", fontSize: 11, textTransform: "uppercase", letterSpacing: ".04em" }}>{h}</th>
                 ))}
               </tr>
@@ -501,10 +501,9 @@ export default function AdminDashboard() {
                     {new Date(l.updated_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                   </td>
                   <td style={{ padding: "8px 12px", color: "#334155" }}>{l.nome || "—"}</td>
-                  <td style={{ padding: "8px 12px", color: "#64748B" }}>{l.email}</td>
                   <td style={{ padding: "8px 12px" }}>
                     {l.telefone
-                      ? <a href={`https://wa.me/${l.telefone.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" style={{ color: "#059669", textDecoration: "none" }}>{l.telefone}</a>
+                      ? <a href={`https://wa.me/${String(l.telefone).replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" style={{ color: "#059669", textDecoration: "none", fontWeight: 600 }}>{l.telefone}</a>
                       : <span style={{ color: "#CBD5E1" }}>—</span>}
                   </td>
                   <td style={{ padding: "8px 12px" }}>

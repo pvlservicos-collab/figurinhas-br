@@ -5,12 +5,27 @@ import { useState, useRef, useEffect } from "react";
 export interface QuizData {
   nome: string;
   dataNascimento: string;
-  email: string;
+  telefone: string;
   clube: string;
   jogadorFavorito: string;
   peso: string;
   altura: string;
   foto: File | null;
+}
+
+function formatPhone(input: string): string {
+  let digits = input.replace(/\D/g, "");
+  // Remove código do país: +55 / 55 / 0055
+  if (digits.startsWith("0055")) digits = digits.slice(4);
+  else if (digits.startsWith("55") && digits.length > 11) digits = digits.slice(2);
+  digits = digits.slice(0, 11);
+  const n = digits.length;
+  if (n === 0) return "";
+  if (n <= 2) return `(${digits}`;
+  if (n <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (n <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  // 11 dígitos — celular com nono dígito
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 3)} ${digits.slice(3, 7)}-${digits.slice(7)}`;
 }
 
 interface QuizStepProps {
@@ -101,7 +116,8 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
           const age = now.getFullYear() - birth.getFullYear();
           if (age < 0 || age > 120) newErrors.dataNascimento = "Data inválida";
         }
-        if (!data.email || !data.email.includes("@") || !data.email.includes(".")) newErrors.email = "Por favor insira um e-mail válido";
+        { const digits = data.telefone.replace(/\D/g, "");
+          if (digits.length < 10) newErrors.telefone = "Digite um telefone válido com DDD"; }
         break;
       case 3:
         if (!data.clube || data.clube.trim().length < 2) newErrors.clube = "Digite ou selecione um clube";
@@ -277,20 +293,23 @@ export default function QuizStep({ step, data, updateData, onNext, onBack, total
             </div>
             {errors.dataNascimento && <p className="text-red-500 text-sm mt-1">{errors.dataNascimento}</p>}
 
-            {/* Email */}
+            {/* Telefone */}
             <div>
               <label className="block text-lg font-bold mb-1 text-copa-blue" style={{ fontFamily: "var(--font-titulo)" }}>
-                SEU MELHOR E-MAIL
+                SEU WHATSAPP
               </label>
               <input
-                type="email"
-                value={data.email}
-                onChange={(e) => updateData({ email: e.target.value })}
-                placeholder="exemplo@email.com"
+                type="tel"
+                value={data.telefone}
+                onChange={(e) => updateData({ telefone: formatPhone(e.target.value) })}
+                placeholder="(11) 9 8765-4321"
+                maxLength={16}
+                autoComplete="tel"
+                inputMode="numeric"
                 className="w-full px-4 py-4 text-lg border-2 border-gray-200 rounded-xl focus:border-copa-blue focus:outline-none transition-colors placeholder:text-gray-400"
                 style={{ fontFamily: "var(--font-papernotes)" }}
               />
-              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+              {errors.telefone && <p className="text-red-500 text-sm mt-1">{errors.telefone}</p>}
             </div>
           </div>
         )}
