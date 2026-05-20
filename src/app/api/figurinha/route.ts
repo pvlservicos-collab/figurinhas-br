@@ -40,16 +40,7 @@ async function getModeloComprimido(): Promise<Buffer> {
   return cachedModeloBuffer;
 }
 
-// Migração: adiciona colunas de tracking se não existirem
-let _migrated = false;
-async function ensureColumns(sql: ReturnType<typeof postgres>) {
-  if (_migrated) return;
-  try {
-    await sql`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS api_key_used SMALLINT`;
-    await sql`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS generation_ms INT`;
-  } catch { /* ignora */ }
-  _migrated = true;
-}
+function ms(start: number) { return `${Date.now() - start}ms`; }
 
 // Rate limit simples em memória
 const requestLog = new Map<string, number[]>();
@@ -132,64 +123,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Imagem inválida" }, { status: 400 });
   }
 
+  const t0 = Date.now();
   const sql = getDb();
-  await ensureColumns(sql);
   const telefoneSafe = telefone ? telefone.replace(/\D/g, "").slice(0, 20) : null;
 
-  // Se é um retry após erro, buscar figurinha criada DEPOIS do erro
-  if (errorTimestamp && telefoneSafe) {
-    let existing: Record<string, string>[] = [];
-    try {
-      const ts = new Date(errorTimestamp);
-      if (!isNaN(ts.getTime())) {
-        existing = await sql`
-          SELECT sticker_id, sticker_url FROM pedidos
-          WHERE telefone = ${telefoneSafe}
-            AND sticker_url IS NOT NULL
-            AND created_at >= ${ts.toISOString()}
-          ORDER BY created_at DESC LIMIT 1
-        `;
-      }
-    } catch (dbErr) {
-      console.error("Erro na busca pós-erro:", dbErr);
-    }
-    if (existing.length > 0) {
-      try {
-        const blobRes = await fetch(existing[0].sticker_url);
-        const blobBuffer = Buffer.from(await blobRes.arrayBuffer());
-        console.log(`Retry: figurinha pós-erro encontrada: ${existing[0].sticker_id}`);
-        return NextResponse.json({
-          imageBase64: blobBuffer.toString("base64"),
-          mimeType: "image/png",
-          stickerId: existing[0].sticker_id,
-        });
-      } catch {
-        console.log("Retry: figurinha pós-erro não acessível, gerando nova...");
-      }
-    }
-    console.log("Retry: nenhuma figurinha pós-erro, gerando nova...");
-  }
-
-  // Salvar rascunho antes de gerar
-  let rascunhoId: number | null = null;
-  if (telefoneSafe) {
-    try {
-      const rows = await sql`
+  // Tudo que pode rodar antes da API roda em paralelo
+  const rascunhoPromise = telefoneSafe
+    ? sql<{ id: number }[]>`
         INSERT INTO pedidos (nome, data_nascimento, clube, jogador_favorito, telefone, status)
         VALUES (${nomeSafe}, ${dataNascimento}, ${clubeSafe}, ${jogadorSafe}, ${telefoneSafe}, 'gerando')
         RETURNING id
-      `;
-      rascunhoId = rows[0]?.id ?? null;
-    } catch { /* ignora — não bloqueia a geração */ }
-  }
+      `.catch(() => null)
+    : Promise.resolve(null);
 
-  // Comprimir foto do usuário antes de enviar pra API (reduz upload)
-  let fotoBufferComprimido: Buffer;
-  try {
-    fotoBufferComprimido = await sharp(fotoBuffer).resize(512).jpeg({ quality: 80 }).toBuffer();
-  } catch {
-    fotoBufferComprimido = fotoBuffer; // fallback: usa original
-  }
+  const fotoCompressPromise = sharp(fotoBuffer).resize(512).jpeg({ quality: 80 }).toBuffer()
+    .catch(() => fotoBuffer);
+
+  const [fotoBufferComprimido, modeloBuffer, rascunhoRows] = await Promise.all([
+    fotoCompressPromise,
+    getModeloComprimido(),
+    rascunhoPromise,
+  ]);
+
+  const rascunhoId: number | null = Array.isArray(rascunhoRows) ? (rascunhoRows[0]?.id ?? null) : null;
+  console.log(`pré-geração paralela: ${ms(t0)} | rascunhoId=${rascunhoId}`);
 
   const nomeUpper = nomeSafe.toUpperCase();
   const clubeFormatted = clubeSafe.toUpperCase();
@@ -237,9 +194,6 @@ ${pesoSafe || alturaSafe ? `Player stats for reference: ${[alturaSafe ? `height 
 The result must look like a real printed collectible sticker card. The portrait must be anatomically correct for the subject's real age and body type as shown in Image 1.`;
 
   try {
-    // Carregar modelo dentro do try para capturar erros de filesystem
-    const modeloBuffer = await getModeloComprimido();
-
     const randomBase = Math.floor(Math.random() * apiKeys.length);
     const startIdx = typeof retryAttempt === "number" && retryAttempt > 0
       ? (randomBase + retryAttempt) % apiKeys.length
@@ -251,7 +205,7 @@ The result must look like a real printed collectible sticker card. The portrait 
     let attempt = 0;
     const TIMEOUT_MS = 250_000;
 
-    console.log(`Gerando figurinha — ${apiKeys.length} key(s), começando pela key ${startIdx + 1}...`);
+    console.log(`API start — ${apiKeys.length} key(s), key ${startIdx + 1} primeiro | total até aqui: ${ms(t0)}`);
 
     while (!imageData && (Date.now() - genStart) < TIMEOUT_MS) {
       const keyIdx = (startIdx + attempt) % apiKeys.length;
@@ -270,7 +224,7 @@ The result must look like a real printed collectible sticker card. The portrait 
         imageData = response.data?.[0];
         if (imageData?.b64_json) {
           successKeyIdx = keyIdx;
-          console.log(`Gerado com key ${keyIdx + 1} na tentativa ${attempt + 1} (${Date.now() - genStart}ms)`);
+          console.log(`API ok — key ${keyIdx + 1}, tentativa ${attempt + 1} | API: ${ms(genStart)} | total: ${ms(t0)}`);
         }
       } catch (apiErr: unknown) {
         const errMsg = apiErr instanceof Error ? apiErr.message : String(apiErr);
@@ -300,16 +254,17 @@ The result must look like a real printed collectible sticker card. The portrait 
       } catch { return null; }
     };
 
+    const tBlob = Date.now();
     const [blob, previewBuffer] = await Promise.all([
       put(`figurinhas/${stickerId}.png`, stickerBuffer, { access: "public", contentType: "image/png" }),
       createPreview(),
     ]);
 
-    // Salvar preview em paralelo com o blob já salvo
     const previewBlob = previewBuffer
       ? await put(`previews/${stickerId}.jpg`, previewBuffer, { access: "public", contentType: "image/jpeg" }).catch(() => null)
       : null;
 
+    console.log(`blob+preview: ${ms(tBlob)}`);
     const finalPreviewUrl = previewBlob?.url ?? blob.url;
 
     // Atualizar rascunho 'gerando' → 'pendente', ou inserir novo se não tem rascunho
@@ -325,7 +280,7 @@ The result must look like a real printed collectible sticker card. The portrait 
         .catch(e => console.error("DB insert erro:", e));
     }
 
-    console.log(`Figurinha salva: ${stickerId} | preview: ${previewBlob?.url ?? "fallback"}`);
+    console.log(`Figurinha salva: ${stickerId} | TOTAL: ${ms(t0)}`);
     return NextResponse.json({
       imageBase64: imageData.b64_json,
       mimeType: "image/png",
