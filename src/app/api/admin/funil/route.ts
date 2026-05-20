@@ -17,8 +17,9 @@ export async function GET(req: NextRequest) {
   const period = searchParams.get("period") || "all";
   const cutoff = periodToCutoff(period);
 
-  const pfSession = cutoff ? sql`AND s.updated_at >= ${cutoff}` : sql``;
-  const pfSimple  = cutoff ? sql`AND updated_at >= ${cutoff}`   : sql``;
+  const pfSession  = cutoff ? sql`AND s.updated_at >= ${cutoff}` : sql``;
+  const pfSimple   = cutoff ? sql`AND updated_at >= ${cutoff}`   : sql``;
+  const pfPedidos  = cutoff ? sql`AND created_at >= ${cutoff}`   : sql``;
 
   const [funnel, leads, pagos, obrigados, daily] = await Promise.all([
     sql`
@@ -47,7 +48,7 @@ export async function GET(req: NextRequest) {
     sql`
       SELECT COUNT(*)::int as count
       FROM pedidos
-      WHERE status IN ('pago','entregue','recuperado') ${pfSimple}
+      WHERE status IN ('pago','entregue','recuperado') ${pfPedidos}
     `,
     sql`
       SELECT s.session_id, s.email, s.nome,
