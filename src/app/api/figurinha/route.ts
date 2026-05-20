@@ -19,9 +19,24 @@ let cachedModeloBuffer: Buffer | null = null;
 
 async function getModeloComprimido(): Promise<Buffer> {
   if (cachedModeloBuffer) return cachedModeloBuffer;
-  const modeloPath = join(process.cwd(), "public", "modelo-figurinha.jpg");
-  const modeloBuffer = readFileSync(modeloPath);
-  cachedModeloBuffer = await sharp(modeloBuffer).resize(512).webp({ quality: 85 }).toBuffer();
+
+  let rawBuffer: Buffer;
+  try {
+    const modeloPath = join(process.cwd(), "public", "modelo-figurinha.jpg");
+    rawBuffer = readFileSync(modeloPath);
+    console.log("modelo: carregado do filesystem");
+  } catch (fsErr) {
+    // Fallback para ambientes serverless onde o filesystem pode não ter o public/
+    const host = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : process.env.NEXT_PUBLIC_URL ?? "http://localhost:3000";
+    console.log(`modelo: filesystem falhou (${fsErr instanceof Error ? fsErr.message : fsErr}), buscando via HTTP de ${host}`);
+    const res = await fetch(`${host}/modelo-figurinha.jpg`);
+    if (!res.ok) throw new Error(`HTTP ${res.status} ao buscar modelo-figurinha.jpg`);
+    rawBuffer = Buffer.from(await res.arrayBuffer());
+  }
+
+  cachedModeloBuffer = await sharp(rawBuffer).resize(512).webp({ quality: 85 }).toBuffer();
   return cachedModeloBuffer;
 }
 
