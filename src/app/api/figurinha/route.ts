@@ -59,7 +59,6 @@ function sanitizeInput(value: string, maxLen: number): string {
   return value.replace(/[^a-zA-ZÀ-ÿ0-9\s\-'.]/g, "").slice(0, maxLen).trim();
 }
 
-// Pool de API keys — cada clique do cliente usa a próxima key na fila
 function getOpenAIKeys(): string[] {
   const keys: string[] = [];
   if (process.env.OPENAI_API_KEY)   keys.push(process.env.OPENAI_API_KEY);
@@ -67,6 +66,22 @@ function getOpenAIKeys(): string[] {
   if (process.env.OPENAI_API_KEY_3) keys.push(process.env.OPENAI_API_KEY_3);
   if (process.env.OPENAI_API_KEY_4) keys.push(process.env.OPENAI_API_KEY_4);
   return keys;
+}
+
+// Rastreia gerações ativas por key — garante que requests simultâneos usem keys diferentes
+const keyInFlight = new Map<number, number>();
+let rrBase = 0; // round-robin como desempate quando todas têm carga igual
+
+function pickBestKey(total: number): number {
+  let best = rrBase % total;
+  let bestLoad = keyInFlight.get(best) ?? 0;
+  for (let i = 1; i < total; i++) {
+    const idx = (rrBase + i) % total;
+    const load = keyInFlight.get(idx) ?? 0;
+    if (load < bestLoad) { bestLoad = load; best = idx; }
+  }
+  rrBase = (rrBase + 1) % total;
+  return best;
 }
 
 export async function POST(req: NextRequest) {
@@ -193,12 +208,12 @@ ${pesoSafe || alturaSafe ? `Player stats for reference: ${[alturaSafe ? `height 
 
 The result must look like a real printed collectible sticker card. The portrait must be anatomically correct for the subject's real age and body type as shown in Image 1.`;
 
-  try {
-    const randomBase = Math.floor(Math.random() * apiKeys.length);
-    const startIdx = typeof retryAttempt === "number" && retryAttempt > 0
-      ? (randomBase + retryAttempt) % apiKeys.length
-      : randomBase;
+  // Escolhe a key com menos gerações ativas; incrementa antes de entrar no try
+  const startIdx = pickBestKey(apiKeys.length);
+  keyInFlight.set(startIdx, (keyInFlight.get(startIdx) ?? 0) + 1);
+  console.log(`key escolhida: ${startIdx + 1} | in-flight: [${Array.from({length: apiKeys.length}, (_, i) => keyInFlight.get(i) ?? 0).join(",")}]`);
 
+  try {
     let b64Result: string | null = null;
     let successKeyIdx = -1;
     const genStart = Date.now();
@@ -311,5 +326,8 @@ The result must look like a real printed collectible sticker card. The portrait 
     const errStack = error instanceof Error ? error.stack : undefined;
     console.error("OUTER CATCH — erro na geração:", errMsg, errStack ?? "");
     return NextResponse.json({ error: "Erro na geração. Tente novamente." }, { status: 500 });
+  } finally {
+    // Libera a key independente de sucesso ou erro
+    keyInFlight.set(startIdx, Math.max(0, (keyInFlight.get(startIdx) ?? 1) - 1));
   }
 }
