@@ -3,7 +3,18 @@
     "allow": [
       "Bash(npm install:*)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(git -C \"c:\\\\Users\\\\pedro\\\\Desktop\\\\a VINICIUS WEB FOLEM MIDIA\\\\oferta-copa-br\" diff src/app/api/figurinha/route.ts)",
+      "Bash(git -C \"c:\\\\Users\\\\pedro\\\\Desktop\\\\a VINICIUS WEB FOLEM MIDIA\\\\oferta-copa-br\" status)",
+      "Bash(git -C \"c:\\\\Users\\\\pedro\\\\Desktop\\\\a VINICIUS WEB FOLEM MIDIA\\\\oferta-copa-br\" ls-files \"public/modelo-figurinha.jpg\")",
+      "Bash(git -C \"c:\\\\Users\\\\pedro\\\\Desktop\\\\a VINICIUS WEB FOLEM MIDIA\\\\oferta-copa-br\" log --oneline -5)",
+      "Bash(git -C \"c:\\\\Users\\\\pedro\\\\Desktop\\\\a VINICIUS WEB FOLEM MIDIA\\\\oferta-copa-br\" show 7064e2b --stat)",
+      "Bash(node -e \"const pkg = require\\('./node_modules/openai/package.json'\\); console.log\\('openai version:', pkg.version\\);\")",
+      "Bash(node -e \"const t = require\\('./node_modules/openai/resources/images.js'\\); console.log\\(Object.keys\\(t\\)\\);\")",
+      "Bash(node -e \"const sharp = require\\('./node_modules/sharp'\\); console.log\\('sharp version:', sharp.versions\\);\")",
+      "Bash(node -e \"const p = require\\('/Users/pedro/Desktop/a VINICIUS WEB FOLEM MIDIA/oferta-copa-br/node_modules/next/package.json'\\); console.log\\(p.version\\);\")",
+      "Bash(git -C \"c:/Users/pedro/Desktop/a VINICIUS WEB FOLEM MIDIA/oferta-copa-br\" show 7064e2b -- src/app/api/figurinha/route.ts)",
+      "Bash(git -C \"c:/Users/pedro/Desktop/a VINICIUS WEB FOLEM MIDIA/oferta-copa-br\" diff src/app/api/figurinha/route.ts)"
     ]
   }
 }
