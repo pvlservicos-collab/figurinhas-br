@@ -16,7 +16,7 @@ async function getPedido(telefone: string) {
     SELECT nome, sticker_id, preview_url, sticker_url
     FROM pedidos
     WHERE (telefone = ${clean} OR telefone = ${"55" + clean} OR telefone = ${clean.replace(/^55/, "")})
-    ORDER BY created_at DESC
+    ORDER BY (sticker_url IS NOT NULL) DESC, created_at DESC
     LIMIT 1
   `.catch(() => []);
 

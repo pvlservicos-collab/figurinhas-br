@@ -77,6 +77,19 @@ export default function Home() {
     sessionRef.current = sid;
   }, []);
 
+  // Cancela abandono pendente de sessão anterior (ex: fechou a aba e voltou)
+  useEffect(() => {
+    const pendingTel = sessionStorage.getItem("_pending_tel");
+    if (pendingTel) {
+      sessionStorage.removeItem("_pending_tel");
+      fetch("/api/abandono/figurinha", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telefone: pendingTel, _cancel: true }),
+      }).catch(() => {});
+    }
+  }, []);
+
   // Salvar UTMs da URL na chegada pra usar no checkout depois
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -263,6 +276,7 @@ export default function Home() {
         setErrorTimestamp(null);
         sessionStorage.setItem("figurinha_sticker_url", dataUrl);
         sessionStorage.setItem("figurinha_sticker_id", result.stickerId || "");
+        try { sessionStorage.removeItem("_pending_tel"); } catch { /* ignore */ }
         try { localStorage.setItem("figurinha_sticker_id", result.stickerId || ""); } catch { /* ignore */ }
         setAppStep("result");
         return;
@@ -350,6 +364,7 @@ export default function Home() {
           data={data}
           fotoPreviewUrl={fotoPreviewUrl}
           onConfirm={() => {
+            try { sessionStorage.setItem("_pending_tel", data.telefone.replace(/\D/g, "").slice(0, 20)); } catch { /* ignore */ }
             setGenStartTime(Date.now());
             setAppStep("loading-generate");
             generateFigurinha();

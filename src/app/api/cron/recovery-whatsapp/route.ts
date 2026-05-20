@@ -7,8 +7,7 @@ const BASE_URL = "https://gerarfigurinhas.vercel.app";
 const FOLEM_WEBHOOK = "https://webhook.folemmidia.com/webhook/app";
 
 function formatPhone(telefone: string): string {
-  const clean = telefone.replace(/\D/g, "");
-  return clean.length <= 11 ? `55${clean}` : clean;
+  return telefone.replace(/\D/g, "");
 }
 
 export async function GET(req: NextRequest) {
