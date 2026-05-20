@@ -24,6 +24,17 @@ async function getModeloComprimido(): Promise<Buffer> {
   return cachedModeloBuffer;
 }
 
+// Migração: adiciona colunas de tracking se não existirem
+let _migrated = false;
+async function ensureColumns(sql: ReturnType<typeof import("postgres").default>) {
+  if (_migrated) return;
+  try {
+    await sql`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS api_key_used SMALLINT`;
+    await sql`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS generation_ms INT`;
+  } catch { /* ignora */ }
+  _migrated = true;
+}
+
 // Rate limit simples em memória
 const requestLog = new Map<string, number[]>();
 function checkRateLimit(ip: string, maxRequests = 5, windowMs = 60000): boolean {
@@ -106,6 +117,7 @@ export async function POST(req: NextRequest) {
   }
 
   const sql = getDb();
+  await ensureColumns(sql);
   const emailSafe = email ? email.slice(0, 255).trim().toLowerCase() : null;
 
   // Se é um retry após erro, buscar figurinha criada DEPOIS do erro
@@ -204,32 +216,44 @@ ${pesoSafe || alturaSafe ? `Player stats for reference: ${[alturaSafe ? `height 
 The result must look like a real printed collectible sticker card with a properly proportioned portrait of the person from Image 1.`;
 
   try {
-    // Seleciona a key baseado no número de tentativas do cliente — cada retry usa a próxima
-    const keyIdx = typeof retryAttempt === "number" && retryAttempt > 0
+    const startIdx = typeof retryAttempt === "number" && retryAttempt > 0
       ? retryAttempt % apiKeys.length
       : 0;
-    const currentKey = apiKeys[keyIdx];
-    console.log(`Gerando figurinha com key ${keyIdx + 1} de ${apiKeys.length} (tentativa cliente: ${retryAttempt ?? 0})...`);
 
-    const openai = new OpenAI({ apiKey: currentKey });
+    const fotoFile = await toFile(fotoBufferComprimido, "foto.jpg", { type: "image/jpeg" });
+    const modeloFile = await toFile(modeloBuffer, "modelo.webp", { type: "image/webp" });
+
     let imageData = null;
+    let successKeyIdx = -1;
+    const genStart = Date.now();
+    let attempt = 0;
+    const TIMEOUT_MS = 250_000; // margem de segurança antes do maxDuration=300s
 
-    try {
-      const fotoFile = await toFile(fotoBufferComprimido, "foto.jpg", { type: "image/jpeg" });
-      const modeloFile = await toFile(modeloBuffer, "modelo.webp", { type: "image/webp" });
+    console.log(`Gerando figurinha — ${apiKeys.length} key(s), começando pela key ${startIdx + 1}...`);
 
-      const response = await openai.images.edit({
-        model: "gpt-image-2",
-        image: [fotoFile, modeloFile],
-        prompt,
-        size: "1024x1536",
-      });
-
-      imageData = response.data?.[0];
-    } catch (apiErr: unknown) {
-      const errMsg = apiErr instanceof Error ? apiErr.message : String(apiErr);
-      console.log(`OpenAI key ${keyIdx + 1} erro: ${errMsg.slice(0, 120)}`);
+    while (!imageData && (Date.now() - genStart) < TIMEOUT_MS) {
+      const keyIdx = (startIdx + attempt) % apiKeys.length;
+      const openai = new OpenAI({ apiKey: apiKeys[keyIdx] });
+      try {
+        const response = await openai.images.edit({
+          model: "gpt-image-2",
+          image: [fotoFile, modeloFile],
+          prompt,
+          size: "1024x1536",
+        });
+        imageData = response.data?.[0];
+        if (imageData?.b64_json) {
+          successKeyIdx = keyIdx;
+          console.log(`Gerado com key ${keyIdx + 1} na tentativa ${attempt + 1} (${Date.now() - genStart}ms)`);
+        }
+      } catch (apiErr: unknown) {
+        const errMsg = apiErr instanceof Error ? apiErr.message : String(apiErr);
+        console.log(`Key ${keyIdx + 1} tentativa ${attempt + 1} falhou: ${errMsg.slice(0, 100)}`);
+      }
+      attempt++;
     }
+
+    const generationMs = Date.now() - genStart;
 
     if (!imageData?.b64_json) {
       return NextResponse.json({ error: "Falha na geração" }, { status: 422 });
@@ -265,12 +289,13 @@ The result must look like a real printed collectible sticker card with a properl
     // Atualizar rascunho 'gerando' → 'pendente', ou inserir novo se não tem rascunho
     if (rascunhoId) {
       sql`UPDATE pedidos SET
-            sticker_id = ${stickerId}, sticker_url = ${blob.url}, preview_url = ${finalPreviewUrl}, status = 'pendente'
+            sticker_id = ${stickerId}, sticker_url = ${blob.url}, preview_url = ${finalPreviewUrl},
+            status = 'pendente', api_key_used = ${successKeyIdx + 1}, generation_ms = ${generationMs}
           WHERE id = ${rascunhoId}`
         .catch(e => console.error("DB update rascunho erro:", e));
     } else {
-      sql`INSERT INTO pedidos (nome, data_nascimento, clube, jogador_favorito, email, sticker_id, sticker_url, preview_url, status)
-          VALUES (${nomeSafe}, ${dataNascimento}, ${clubeSafe}, ${jogadorSafe}, ${emailSafe}, ${stickerId}, ${blob.url}, ${finalPreviewUrl}, 'pendente')`
+      sql`INSERT INTO pedidos (nome, data_nascimento, clube, jogador_favorito, email, sticker_id, sticker_url, preview_url, status, api_key_used, generation_ms)
+          VALUES (${nomeSafe}, ${dataNascimento}, ${clubeSafe}, ${jogadorSafe}, ${emailSafe}, ${stickerId}, ${blob.url}, ${finalPreviewUrl}, 'pendente', ${successKeyIdx + 1}, ${generationMs})`
         .catch(e => console.error("DB insert erro:", e));
     }
 

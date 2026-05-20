@@ -4,9 +4,10 @@ import Image from "next/image";
 
 interface HeroProps {
   onStart: () => void;
+  onViewPrice: () => void;
 }
 
-export default function Hero({ onStart }: HeroProps) {
+export default function Hero({ onStart, onViewPrice }: HeroProps) {
   return (
     <section className="flex flex-col items-center min-h-[100dvh] w-full px-5 pt-8 pb-4 text-center overflow-x-hidden justify-center gap-3 md:gap-2 md:py-6" style={{ background: "#FFDF00" }}>
       <h1
@@ -103,7 +104,7 @@ export default function Hero({ onStart }: HeroProps) {
         INICIAR
       </button>
 
-      <div className="mt-2 flex flex-col items-center gap-2">
+<div className="mt-2 flex flex-col items-center gap-2">
         <div className="flex items-center gap-1">
           {[
             { code: "br", label: "Brasil", big: true },
@@ -127,6 +128,7 @@ export default function Hero({ onStart }: HeroProps) {
           +2.500 figurinhas já criadas!
         </p>
       </div>
+
     </section>
   );
 }

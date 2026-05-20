@@ -14,6 +14,25 @@ interface Lead {
   obrigado: boolean;
 }
 
+interface ApiKeyStats {
+  api_key_used: number;
+  total: number;
+  avg_ms: number;
+  min_ms: number;
+  max_ms: number;
+}
+interface ApiGenRecente {
+  nome: string | null;
+  email: string;
+  api_key_used: number;
+  generation_ms: number;
+  created_at: string;
+}
+interface ApiStats {
+  perKey: ApiKeyStats[];
+  recentes: ApiGenRecente[];
+}
+
 interface FunilData {
   funnel: { step: string; count: number }[];
   leads: Lead[];
@@ -59,6 +78,7 @@ export default function AdminDashboard() {
   const [countdown, setCountdown] = useState(60);
   const [pageSize, setPageSize] = useState(25);
   const [page, setPage]         = useState(0);
+  const [apiStats, setApiStats] = useState<ApiStats | null>(null);
 
   // Busca de figurinha por nome
   const [searchQuery, setSearchQuery]   = useState("");
@@ -98,6 +118,13 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => { fetchData(period); }, [period, fetchData]);
+
+  useEffect(() => {
+    fetch("/api/admin/api-stats")
+      .then(r => r.json())
+      .then(setApiStats)
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const iv = setInterval(() => {
@@ -349,6 +376,79 @@ export default function AdminDashboard() {
                 </tbody>
               </table>
             )
+          )}
+        </div>
+
+        {/* API Stats */}
+        <div style={{ background: "#fff", borderRadius: 12, padding: 18, boxShadow: "0 1px 3px rgba(0,0,0,.07)", marginBottom: 24 }}>
+          <h3 style={{ fontSize: 13, fontWeight: 700, marginBottom: 14 }}>⚡ Uso das APIs de geração</h3>
+
+          {/* Por key */}
+          {apiStats && apiStats.perKey.length > 0 ? (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 10, marginBottom: 18 }}>
+              {apiStats.perKey.map(k => (
+                <div key={k.api_key_used} style={{ background: "#F8FAFC", borderRadius: 10, padding: "12px 14px", border: "1px solid #E2E8F0" }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 6 }}>
+                    API Key {k.api_key_used}
+                  </div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: "#0F172A", lineHeight: 1 }}>{k.total}</div>
+                  <div style={{ fontSize: 11, color: "#94A3B8", marginTop: 2 }}>gerações</div>
+                  <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 2 }}>
+                    <div style={{ fontSize: 12, color: "#334155" }}>
+                      <span style={{ fontWeight: 700 }}>{k.avg_ms ? (k.avg_ms / 1000).toFixed(1) : "—"}s</span>
+                      <span style={{ color: "#94A3B8" }}> média</span>
+                    </div>
+                    <div style={{ fontSize: 11, color: "#94A3B8" }}>
+                      {k.min_ms ? (k.min_ms / 1000).toFixed(1) : "—"}s – {k.max_ms ? (k.max_ms / 1000).toFixed(1) : "—"}s
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ fontSize: 12, color: "#94A3B8", marginBottom: 14 }}>Nenhuma geração com tracking ainda. Novos dados aparecerão aqui.</p>
+          )}
+
+          {/* Últimas gerações */}
+          {apiStats && apiStats.recentes.length > 0 && (
+            <>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#64748B", marginBottom: 8, textTransform: "uppercase", letterSpacing: ".04em" }}>Últimas gerações</div>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                  <thead>
+                    <tr>
+                      {["Nome", "Email", "API Key", "Tempo", "Data"].map(h => (
+                        <th key={h} style={{ background: "#F8FAFC", borderBottom: "1px solid #E2E8F0", padding: "7px 10px", textAlign: "left", fontWeight: 700, color: "#64748B", fontSize: 11, textTransform: "uppercase", letterSpacing: ".04em" }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {apiStats.recentes.map((r, i) => (
+                      <tr key={i} style={{ borderBottom: "1px solid #F1F5F9" }}>
+                        <td style={{ padding: "7px 10px", color: "#334155", fontWeight: 600 }}>{r.nome || "—"}</td>
+                        <td style={{ padding: "7px 10px", color: "#64748B" }}>{r.email}</td>
+                        <td style={{ padding: "7px 10px" }}>
+                          <span style={{ background: "#DBEAFE", color: "#1D4ED8", borderRadius: 99, padding: "2px 8px", fontSize: 11, fontWeight: 700 }}>
+                            Key {r.api_key_used}
+                          </span>
+                        </td>
+                        <td style={{ padding: "7px 10px" }}>
+                          <span style={{
+                            fontWeight: 700,
+                            color: r.generation_ms < 30000 ? "#059669" : r.generation_ms < 60000 ? "#d97706" : "#dc2626"
+                          }}>
+                            {(r.generation_ms / 1000).toFixed(1)}s
+                          </span>
+                        </td>
+                        <td style={{ padding: "7px 10px", color: "#94A3B8" }}>
+                          {new Date(r.created_at).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
 

@@ -1,6 +1,45 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+
+const RECENTES = ["/f1.webp", "/f2.webp", "/f3.webp", "/f4.webp"];
+
+function FigurinhasCarousel() {
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    let frame: number;
+    let x = 0;
+    const speed = 0.18;
+    const totalWidth = track.scrollWidth / 2;
+
+    const tick = () => {
+      x -= speed;
+      if (Math.abs(x) >= totalWidth) x = 0;
+      track.style.transform = `translateX(${x}px)`;
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  const items = [...RECENTES, ...RECENTES];
+
+  return (
+    <div className="w-full overflow-hidden" style={{ maskImage: "linear-gradient(to right, transparent, black 10%, black 90%, transparent)" }}>
+      <div ref={trackRef} className="flex gap-3" style={{ width: "max-content", willChange: "transform" }}>
+        {items.map((src, i) => (
+          <div key={i} className="flex-shrink-0 w-20 rounded-lg overflow-hidden shadow-md" style={{ opacity: 0.5, aspectRatio: "2/3" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={src} alt="" className="w-full h-full object-cover" draggable={false} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 interface ResultScreenProps {
   stickerUrl: string;
@@ -109,6 +148,21 @@ export default function ResultScreen({ stickerUrl, stickerId, onRetry, onCheckou
         </div>
       ) : (
         <div className="flex flex-col items-center w-full max-w-sm animate-slide-up">
+
+          {/* Barra de progresso */}
+          <div className="w-full px-1 mb-5">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-sm font-bold text-copa-blue" style={{ fontFamily: "var(--font-papernotes)" }}>
+                Você já criou sua figurinha 🔥
+              </span>
+              <span className="text-sm font-black text-copa-green" style={{ fontFamily: "var(--font-titulo)" }}>95%</span>
+            </div>
+            <div className="w-full rounded-full h-1.5 overflow-hidden" style={{ background: "rgba(0,35,149,0.15)" }}>
+              <div className="h-1.5 rounded-full transition-all duration-700" style={{ width: "95%", background: "linear-gradient(90deg, #009C3B, #00c94d)" }} />
+            </div>
+            <p className="text-xs mt-1 text-right" style={{ fontFamily: "var(--font-papernotes)", color: "rgba(0,35,149,0.5)" }}>só falta confirmar</p>
+          </div>
+
           {/* Preview da figurinha com marca d'água */}
           <div
             className="relative w-56 md:w-64 rounded-xl overflow-hidden shadow-2xl border-3 border-copa-blue mb-6"
@@ -194,6 +248,18 @@ export default function ResultScreen({ stickerUrl, stickerId, onRetry, onCheckou
               ⚽ RECEBER MINHA FIGURINHA
             </span>
           </button>
+
+          <p className="text-sm text-gray-600 text-center mt-3" style={{ fontFamily: "var(--font-papernotes)" }}>
+            ✅ Inclui download em alta qualidade
+          </p>
+
+          {/* Carrossel de figurinhas */}
+          <div className="w-full mt-6">
+            <p className="text-xs text-center mb-2 font-bold tracking-widest uppercase" style={{ fontFamily: "var(--font-papernotes)", color: "rgba(0,35,149,0.5)" }}>
+              Últimas figurinhas geradas
+            </p>
+            <FigurinhasCarousel />
+          </div>
         </div>
       )}
     </section>

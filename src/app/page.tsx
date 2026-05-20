@@ -206,22 +206,24 @@ export default function Home() {
         sessionStorage.setItem("figurinha_sticker_url", dataUrl);
         sessionStorage.setItem("figurinha_sticker_id", result.stickerId || "");
         try { localStorage.setItem("figurinha_sticker_id", result.stickerId || ""); } catch { /* ignore */ }
-      } else {
-        console.error("Erro:", result.error);
-        setStickerUrl("");
-        const now = new Date().toISOString();
-        setErrorTimestamp(now);
-        setRetryCount(attempt + 1);
+        setAppStep("result");
+        return;
       }
+
+      // Servidor retornou erro — retry automático sem mostrar erro ao usuário
+      console.warn(`Tentativa ${attempt + 1} falhou (server): ${result.error}`);
     } catch (error) {
-      console.error("Erro na geração:", error);
-      setStickerUrl("");
-      const now = new Date().toISOString();
-      setErrorTimestamp(now);
-      setRetryCount(attempt + 1);
+      // Timeout do Vercel (504) ou erro de rede — retry automático
+      console.warn(`Tentativa ${attempt + 1} falhou (rede):`, error);
     }
 
-    setAppStep("result");
+    // Fica na tela de loading e tenta novamente
+    const now = new Date().toISOString();
+    setErrorTimestamp(now);
+    setRetryCount(attempt + 1);
+    // Pequena pausa antes do próximo round para não sobrecarregar
+    await new Promise(r => setTimeout(r, 2000));
+    generateFigurinha(now, attempt + 1);
   }, []);
 
   const handleQuizNext = useCallback(() => {
@@ -252,13 +254,19 @@ export default function Home() {
   return (
     <main className="flex flex-col items-center min-h-screen bg-white">
       {appStep === "hero" && (
-        <Hero onStart={() => {
-          // Limpar sessão anterior
-          sessionStorage.removeItem("figurinha_sticker_url");
-          sessionStorage.removeItem("figurinha_sticker_id");
-          setQuizStep(1);
-          setAppStep("quiz-1");
-        }} />
+        <Hero
+          onStart={() => {
+            sessionStorage.removeItem("figurinha_sticker_url");
+            sessionStorage.removeItem("figurinha_sticker_id");
+            setQuizStep(1);
+            setAppStep("quiz-1");
+          }}
+          onViewPrice={() => {
+            setStickerUrl("/figurinha-arthur.webp");
+            setStickerId("demo");
+            setAppStep("result");
+          }}
+        />
       )}
 
       {(appStep === "quiz-1" || appStep === "quiz-2" || appStep === "quiz-3") && (
@@ -306,6 +314,14 @@ export default function Home() {
 
       {appStep === "result" && (
         <ResultScreen stickerUrl={stickerUrl} stickerId={stickerId} onRetry={() => {
+          if (stickerId === "demo") {
+            // Veio do "ver preço" sem gerar — volta pro quiz
+            setStickerUrl("");
+            setStickerId("");
+            setQuizStep(1);
+            setAppStep("quiz-1");
+            return;
+          }
           sessionStorage.removeItem("figurinha_sticker_url");
           sessionStorage.removeItem("figurinha_sticker_id");
           setGenStartTime(Date.now());
