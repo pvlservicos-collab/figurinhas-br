@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
 
-function periodToInterval(period: string): string | null {
+function periodToCutoff(period: string): Date | null {
+  const now = Date.now();
   const hourMatch = period.match(/^(\d+)h$/);
-  if (hourMatch) return `${hourMatch[1]} hours`;
-  if (period === "today") return "24 hours";
-  if (period === "7d")    return "7 days";
-  if (period === "30d")   return "30 days";
+  if (hourMatch) return new Date(now - parseInt(hourMatch[1]) * 3600_000);
+  if (period === "today") return new Date(now - 24 * 3600_000);
+  if (period === "7d")    return new Date(now - 7  * 86400_000);
+  if (period === "30d")   return new Date(now - 30 * 86400_000);
   return null;
 }
 
@@ -14,16 +15,10 @@ export async function GET(req: NextRequest) {
   const sql = getDb();
   const { searchParams } = new URL(req.url);
   const period = searchParams.get("period") || "all";
-  const interval = periodToInterval(period);
+  const cutoff = periodToCutoff(period);
 
-  // Usar cast ::interval para que o parâmetro seja aceito pelo PostgreSQL
-  const pfSession = interval
-    ? sql`AND s.updated_at >= NOW() - ${interval}::interval`
-    : sql``;
-
-  const pfSimple = interval
-    ? sql`AND updated_at >= NOW() - ${interval}::interval`
-    : sql``;
+  const pfSession = cutoff ? sql`AND s.updated_at >= ${cutoff}` : sql``;
+  const pfSimple  = cutoff ? sql`AND updated_at >= ${cutoff}`   : sql``;
 
   const [funnel, leads, pagos, obrigados, daily] = await Promise.all([
     sql`
@@ -71,7 +66,7 @@ export async function GET(req: NextRequest) {
     sql`
       SELECT updated_at::date as day, COUNT(DISTINCT session_id)::int as count
       FROM sessions
-      WHERE email IS NOT NULL AND updated_at >= NOW() - '14 days'::interval
+      WHERE email IS NOT NULL AND updated_at >= NOW() - INTERVAL '14 days'
       GROUP BY day
       ORDER BY day
     `,
