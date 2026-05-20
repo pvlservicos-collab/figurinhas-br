@@ -37,13 +37,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, action: "cancelled" });
   }
 
+  // Marca o pedido mais recente deste telefone (gerando ou já pronto)
   await sql`
     UPDATE pedidos SET abandoned_at = NOW()
-    WHERE telefone = ${telefone}
-      AND sticker_url IS NOT NULL
-      AND recovery_whatsapp_sent_at IS NULL
-      ${body.stickerId ? sql`AND sticker_id = ${body.stickerId}` : sql``}
-    ORDER BY created_at DESC LIMIT 1
+    WHERE id = (
+      SELECT id FROM pedidos
+      WHERE telefone = ${telefone}
+        AND recovery_whatsapp_sent_at IS NULL
+        ${body.stickerId ? sql`AND sticker_id = ${body.stickerId}` : sql``}
+      ORDER BY created_at DESC
+      LIMIT 1
+    )
   `.catch(() => {});
 
   console.log(`Abandono registrado — telefone=${telefone}`);

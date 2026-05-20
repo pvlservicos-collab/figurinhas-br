@@ -129,28 +129,26 @@ export default function Home() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [appStep]);
 
-  // Rastrear abandono na tela de resultado — 90s depois envia WhatsApp via cron
+  // Rastrear abandono durante loading — usuário saiu enquanto a figurinha gerava
+  // O servidor continua gerando; o cron envia o WhatsApp quando estiver pronta (>90s após abandono)
   useEffect(() => {
-    if (appStep !== "result" || !stickerId) return;
+    if (appStep !== "loading-generate") return;
 
-    let abandonTimer: ReturnType<typeof setTimeout> | null = null;
-    let abandoned = false;
+    let sent = false;
 
     const sendAbandon = () => {
-      if (abandoned) return;
-      abandoned = true;
+      if (sent) return;
+      sent = true;
       const { telefone } = dataRef.current;
       if (!telefone) return;
       navigator.sendBeacon(
         "/api/abandono/figurinha",
-        new Blob([JSON.stringify({ telefone, stickerId })], { type: "application/json" })
+        new Blob([JSON.stringify({ telefone })], { type: "application/json" })
       );
     };
 
-    const onHide = () => { abandonTimer = setTimeout(sendAbandon, 90_000); };
-    const onShow = () => {
-      if (abandonTimer) { clearTimeout(abandonTimer); abandonTimer = null; }
-      if (abandoned) return;
+    const cancelAbandon = () => {
+      if (sent) return;
       const { telefone } = dataRef.current;
       if (!telefone) return;
       navigator.sendBeacon(
@@ -158,22 +156,20 @@ export default function Home() {
         new Blob([JSON.stringify({ telefone, _cancel: true })], { type: "application/json" })
       );
     };
-    const onUnload = () => sendAbandon();
 
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) onHide(); else onShow();
-    });
-    window.addEventListener("beforeunload", onUnload);
+    const onVisibility = () => {
+      if (document.hidden) sendAbandon(); else cancelAbandon();
+    };
+
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("beforeunload", sendAbandon);
 
     return () => {
-      if (abandonTimer) clearTimeout(abandonTimer);
-      document.removeEventListener("visibilitychange", () => {
-        if (document.hidden) onHide(); else onShow();
-      });
-      window.removeEventListener("beforeunload", onUnload);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("beforeunload", sendAbandon);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appStep, stickerId]);
+  }, [appStep]);
 
   // Manter tela ligada durante geração (Wake Lock API)
   useEffect(() => {
