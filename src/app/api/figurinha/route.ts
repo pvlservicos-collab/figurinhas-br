@@ -5,6 +5,7 @@ import { join } from "path";
 import { randomUUID } from "crypto";
 import { put } from "@vercel/blob";
 import sharp from "sharp";
+import postgres from "postgres";
 import { getDb } from "@/lib/db";
 
 export const maxDuration = 300;
@@ -26,7 +27,7 @@ async function getModeloComprimido(): Promise<Buffer> {
 
 // Migração: adiciona colunas de tracking se não existirem
 let _migrated = false;
-async function ensureColumns(sql: ReturnType<typeof import("postgres").default>) {
+async function ensureColumns(sql: ReturnType<typeof postgres>) {
   if (_migrated) return;
   try {
     await sql`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS api_key_used SMALLINT`;
