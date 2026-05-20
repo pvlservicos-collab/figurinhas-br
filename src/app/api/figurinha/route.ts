@@ -202,30 +202,39 @@ export async function POST(req: NextRequest) {
   ].filter(Boolean).join(" | ");
 
   const prompt = `You are given two images:
-- Image 1: A photograph of a person (the SUBJECT). This person may be a child or an adult.
+- Image 1: A photograph of a person (the SUBJECT).
 - Image 2: A collectible sports sticker card (the TEMPLATE).
 
 TASK: Create a new version of the sticker card (Image 2) featuring the person from Image 1.
+
+BEFORE STARTING — ANALYZE Image 1:
+Carefully observe the subject's face, head size, shoulder width, and overall body frame. Determine whether this person is a child or an adult. This observation governs everything you draw.
 
 INSTRUCTIONS:
 
 1. REMOVE the adult athlete from Image 2 entirely.
 
-2. GENERATE a medium close-up portrait of the person from Image 1: from the chest up, facing forward, arms down. The person must wear the yellow and green Brazil 2026 national team jersey (yellow body #FFDF00, green collar and sleeves #009C3B, CBF badge on the left chest). IMPORTANT: the jersey and body must match the REAL proportions of the person from Image 1. If the subject is a child, draw a child-sized body with a child-sized jersey. If the subject is an adult, draw an adult-sized body. Do NOT put a child's head on an adult body.
+2. GENERATE a chest-up portrait of the subject wearing the yellow and green Brazil 2026 national team jersey (yellow body #FFDF00, green collar and sleeves #009C3B, CBF badge on left chest), facing forward, arms down.
 
-3. The person's FACE must be identical to Image 1: same facial features, expression, hair, skin tone, eyes, smile. Do not alter the face in any way.
+   BODY PROPORTIONS — CRITICAL:
+   - Use the subject's FACE from Image 1 as your scale anchor. The shoulders, torso, and jersey must be sized to fit that face naturally.
+   - If the subject is a child: draw narrow child-sized shoulders, small torso, jersey scaled to a child's frame. The head-to-shoulder ratio must match real child anatomy — wide head relative to narrow shoulders.
+   - If the subject is an adult: draw standard adult proportions.
+   - NEVER place a child's face on adult-width shoulders. If the face in Image 1 is small and round (child), the body must also be small. Anatomical correctness for the subject's actual age is mandatory.
 
-4. Place this portrait into the card, centered in the same area where the original athlete was.
+3. FACE: reproduce the subject's face from Image 1 exactly — same features, expression, hair, skin tone, eyes. Do not alter it.
 
-5. Keep ALL other elements of Image 2 exactly as they are: turquoise background, green "26" graphic, all icons, emblems, flag, vertical text, logos, borders, card edges, bottom text area.
+4. Place the portrait centered where the original athlete was in the card.
 
-6. Update the text fields with the following data:
+5. Keep ALL other card elements unchanged: turquoise background, green "26" graphic, icons, emblems, flag, vertical text, logos, borders, card edges, bottom text area.
+
+6. Update the text fields:
 [NAME]: ${nomeUpper}
 [INFO]: ${infoLine}
 [CLUB]: ${clubeFormatted}
 ${pesoSafe || alturaSafe ? `Player stats for reference: ${[alturaSafe ? `height ${alturaSafe} cm` : null, pesoSafe ? `weight ${pesoSafe} kg` : null].filter(Boolean).join(", ")}.` : ""}
 
-The result must look like a real printed collectible sticker card with a properly proportioned portrait of the person from Image 1.`;
+The result must look like a real printed collectible sticker card. The portrait must be anatomically correct for the subject's real age and body type as shown in Image 1.`;
 
   try {
     // Carregar modelo dentro do try para capturar erros de filesystem
