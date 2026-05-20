@@ -20,6 +20,7 @@ async function fetchWithRetry(url: string, attempts = 3): Promise<Response> {
 export default function Obrigado() {
   const [stickerUrl, setStickerUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searchMode, setSearchMode] = useState<"phone" | "email">("phone");
   const [emailInput, setEmailInput] = useState("");
   const [emailLoading, setEmailLoading] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -69,21 +70,28 @@ export default function Obrigado() {
   }, []);
 
   const handleBuscarPorEmail = async () => {
-    const digits = emailInput.replace(/\D/g, "");
-    if (digits.length < 10) {
-      setEmailError("Digite um telefone válido com DDD.");
-      return;
+    let query: string;
+    if (searchMode === "phone") {
+      const digits = emailInput.replace(/\D/g, "");
+      if (digits.length < 10) { setEmailError("Digite um telefone válido com DDD."); return; }
+      query = digits;
+    } else {
+      const em = emailInput.trim().toLowerCase();
+      if (!em || !em.includes("@") || !em.includes(".")) { setEmailError("Digite um e-mail válido."); return; }
+      query = em;
     }
     setEmailLoading(true);
     setEmailError(null);
     try {
-      const res = await fetch(`/api/sticker?email=${encodeURIComponent(digits)}`);
+      const res = await fetch(`/api/sticker?email=${encodeURIComponent(query)}`);
       const data = await res.json();
       if (data.url) {
         setStickerUrl(data.url);
         setEmailError(null);
       } else {
-        setEmailError("Figurinha não encontrada para esse telefone. Verifique se digitou corretamente.");
+        setEmailError(searchMode === "phone"
+          ? "Figurinha não encontrada para esse telefone. Verifique se digitou corretamente."
+          : "Figurinha não encontrada para esse e-mail. Verifique se digitou corretamente.");
       }
     } catch {
       setEmailError("Erro ao buscar. Tente novamente.");
@@ -198,30 +206,68 @@ export default function Obrigado() {
                 </p>
               ) : (
                 <>
-                  <p className="text-sm text-gray-600 text-center mb-1" style={{ fontFamily: "var(--font-papernotes)" }}>
-                    Coloque seu telefone para achar sua figurinha vinculada
-                  </p>
+                  {/* Toggle tabs */}
+                  <div className="flex rounded-xl overflow-hidden border-2 border-copa-blue mb-4">
+                    <button
+                      onClick={() => { setSearchMode("phone"); setEmailInput(""); setEmailError(null); }}
+                      className="flex-1 py-2 text-sm font-black tracking-wide transition-colors cursor-pointer"
+                      style={{
+                        fontFamily: "var(--font-titulo)",
+                        background: searchMode === "phone" ? "#002395" : "#e8ecf8",
+                        color: searchMode === "phone" ? "#fff" : "#002395",
+                      }}
+                    >
+                      📱 TELEFONE
+                    </button>
+                    <button
+                      onClick={() => { setSearchMode("email"); setEmailInput(""); setEmailError(null); }}
+                      className="flex-1 py-2 text-sm font-black tracking-wide transition-colors cursor-pointer"
+                      style={{
+                        fontFamily: "var(--font-titulo)",
+                        background: searchMode === "email" ? "#002395" : "#e8ecf8",
+                        color: searchMode === "email" ? "#fff" : "#002395",
+                      }}
+                    >
+                      ✉️ E-MAIL
+                    </button>
+                  </div>
+
                   <p className="text-xs text-gray-400 text-center mb-3" style={{ fontFamily: "var(--font-papernotes)" }}>
-                    Use o mesmo WhatsApp que você cadastrou ao criar a figurinha.
+                    {searchMode === "phone"
+                      ? "Use o mesmo WhatsApp que você cadastrou ao criar a figurinha."
+                      : "Use o e-mail que você cadastrou ao criar a figurinha."}
                   </p>
+
                   <div className="flex flex-col gap-2">
-                    <input
-                      type="tel"
-                      inputMode="numeric"
-                      placeholder="(11) 9 8765-4321"
-                      value={emailInput}
-                      onChange={(e) => setEmailInput(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleBuscarPorEmail()}
-                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base outline-none focus:border-copa-blue transition-colors"
-                      style={{ fontFamily: "var(--font-papernotes)" }}
-                    />
+                    {searchMode === "phone" ? (
+                      <input
+                        type="tel"
+                        inputMode="numeric"
+                        placeholder="(11) 9 8765-4321"
+                        value={emailInput}
+                        onChange={(e) => setEmailInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleBuscarPorEmail()}
+                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base outline-none focus:border-copa-blue transition-colors"
+                        style={{ fontFamily: "var(--font-papernotes)" }}
+                      />
+                    ) : (
+                      <input
+                        type="email"
+                        placeholder="seu@email.com"
+                        value={emailInput}
+                        onChange={(e) => setEmailInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleBuscarPorEmail()}
+                        className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-base outline-none focus:border-copa-blue transition-colors"
+                        style={{ fontFamily: "var(--font-papernotes)" }}
+                      />
+                    )}
                     <button
                       onClick={handleBuscarPorEmail}
                       disabled={emailLoading}
                       className="w-full bg-copa-blue text-white font-bold text-base py-3 rounded-xl active:scale-95 transition-all duration-200 cursor-pointer disabled:opacity-60"
                       style={{ fontFamily: "var(--font-titulo)" }}
                     >
-                      {emailLoading ? "BUSCANDO..." : "BUSCAR MINHA FIGURINHA 📱"}
+                      {emailLoading ? "BUSCANDO..." : searchMode === "phone" ? "BUSCAR POR TELEFONE 📱" : "BUSCAR POR E-MAIL ✉️"}
                     </button>
                     {emailError && (
                       <p className="text-sm text-red-600 text-center" style={{ fontFamily: "var(--font-papernotes)" }}>
