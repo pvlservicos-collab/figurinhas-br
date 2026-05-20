@@ -129,16 +129,17 @@ export default function Home() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [appStep]);
 
-  // Rastrear abandono durante loading — usuário saiu enquanto a figurinha gerava
-  // O servidor continua gerando; o cron envia o WhatsApp quando estiver pronta (>90s após abandono)
+  // Rastrear abandono durante loading — só dispara se ficar fora por mais de 90s
   useEffect(() => {
     if (appStep !== "loading-generate") return;
 
-    let sent = false;
+    let hideTimer: ReturnType<typeof setTimeout> | null = null;
+    let beaconSent = false;
 
-    const sendAbandon = () => {
-      if (sent) return;
-      sent = true;
+    // Usado no beforeunload (aba fechada): manda imediato, cron cuida dos 90s no servidor
+    const sendBeaconNow = () => {
+      if (beaconSent) return;
+      beaconSent = true;
       const { telefone } = dataRef.current;
       if (!telefone) return;
       navigator.sendBeacon(
@@ -147,26 +148,48 @@ export default function Home() {
       );
     };
 
-    const cancelAbandon = () => {
-      if (sent) return;
+    // Usado após 90s de ausência: fetch normal (página está em background mas não fechada)
+    const sendAfterDelay = () => {
+      if (beaconSent) return;
+      beaconSent = true;
       const { telefone } = dataRef.current;
       if (!telefone) return;
-      navigator.sendBeacon(
-        "/api/abandono/figurinha",
-        new Blob([JSON.stringify({ telefone, _cancel: true })], { type: "application/json" })
-      );
+      fetch("/api/abandono/figurinha", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telefone }),
+      }).catch(() => {});
     };
 
     const onVisibility = () => {
-      if (document.hidden) sendAbandon(); else cancelAbandon();
+      if (document.hidden) {
+        // Saiu — inicia timer de 90s
+        hideTimer = setTimeout(sendAfterDelay, 90_000);
+      } else {
+        // Voltou — cancela o timer (se não passou 90s, nada foi enviado)
+        if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+        if (beaconSent) {
+          // Voltou depois de 90s: cancela no servidor
+          beaconSent = false;
+          const { telefone } = dataRef.current;
+          if (telefone) {
+            fetch("/api/abandono/figurinha", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ telefone, _cancel: true }),
+            }).catch(() => {});
+          }
+        }
+      }
     };
 
     document.addEventListener("visibilitychange", onVisibility);
-    window.addEventListener("beforeunload", sendAbandon);
+    window.addEventListener("beforeunload", sendBeaconNow);
 
     return () => {
+      if (hideTimer) clearTimeout(hideTimer);
       document.removeEventListener("visibilitychange", onVisibility);
-      window.removeEventListener("beforeunload", sendAbandon);
+      window.removeEventListener("beforeunload", sendBeaconNow);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appStep]);
