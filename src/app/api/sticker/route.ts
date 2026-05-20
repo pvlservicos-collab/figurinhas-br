@@ -10,15 +10,24 @@ export async function GET(req: NextRequest) {
 
   try {
     if (email) {
-      const emailSafe = email.trim().toLowerCase().slice(0, 255);
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailSafe)) {
-        return NextResponse.json({ error: "Email inválido" }, { status: 400 });
+      // Aceita telefone (só dígitos) ou email
+      const val = email.trim().slice(0, 255);
+      const digits = val.replace(/\D/g, "");
+      const isPhone = digits.length >= 10 && digits === val;
+      if (isPhone) {
+        rows = await sql`
+          SELECT sticker_url FROM pedidos
+          WHERE telefone = ${digits} AND sticker_url IS NOT NULL
+          ORDER BY created_at DESC LIMIT 1
+        `;
+      } else {
+        const emailSafe = val.toLowerCase();
+        rows = await sql`
+          SELECT sticker_url FROM pedidos
+          WHERE email = ${emailSafe} AND sticker_url IS NOT NULL
+          ORDER BY created_at DESC LIMIT 1
+        `;
       }
-      rows = await sql`
-        SELECT sticker_url FROM pedidos
-        WHERE email = ${emailSafe} AND sticker_url IS NOT NULL
-        ORDER BY created_at DESC LIMIT 1
-      `;
     } else if (id) {
       if (!/^[0-9a-f-]{36}$/.test(id)) {
         return NextResponse.json({ error: "ID inválido" }, { status: 400 });

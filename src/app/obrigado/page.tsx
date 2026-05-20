@@ -69,21 +69,21 @@ export default function Obrigado() {
   }, []);
 
   const handleBuscarPorEmail = async () => {
-    const email = emailInput.trim().toLowerCase();
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setEmailError("Digite um e-mail válido.");
+    const digits = emailInput.replace(/\D/g, "");
+    if (digits.length < 10) {
+      setEmailError("Digite um telefone válido com DDD.");
       return;
     }
     setEmailLoading(true);
     setEmailError(null);
     try {
-      const res = await fetch(`/api/sticker?email=${encodeURIComponent(email)}`);
+      const res = await fetch(`/api/sticker?email=${encodeURIComponent(digits)}`);
       const data = await res.json();
       if (data.url) {
         setStickerUrl(data.url);
         setEmailError(null);
       } else {
-        setEmailError("Figurinha não encontrada para esse e-mail. Verifique se digitou corretamente.");
+        setEmailError("Figurinha não encontrada para esse telefone. Verifique se digitou corretamente.");
       }
     } catch {
       setEmailError("Erro ao buscar. Tente novamente.");
@@ -199,15 +199,16 @@ export default function Obrigado() {
               ) : (
                 <>
                   <p className="text-sm text-gray-600 text-center mb-1" style={{ fontFamily: "var(--font-papernotes)" }}>
-                    Digite o e-mail usado na compra para buscar sua figurinha:
+                    Coloque seu telefone para achar sua figurinha vinculada
                   </p>
                   <p className="text-xs text-gray-400 text-center mb-3" style={{ fontFamily: "var(--font-papernotes)" }}>
-                    Use o mesmo e-mail que você cadastrou ao criar a figurinha.
+                    Use o mesmo WhatsApp que você cadastrou ao criar a figurinha.
                   </p>
                   <div className="flex flex-col gap-2">
                     <input
-                      type="email"
-                      placeholder="seu@email.com"
+                      type="tel"
+                      inputMode="numeric"
+                      placeholder="(11) 9 8765-4321"
                       value={emailInput}
                       onChange={(e) => setEmailInput(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleBuscarPorEmail()}
@@ -220,7 +221,7 @@ export default function Obrigado() {
                       className="w-full bg-copa-blue text-white font-bold text-base py-3 rounded-xl active:scale-95 transition-all duration-200 cursor-pointer disabled:opacity-60"
                       style={{ fontFamily: "var(--font-titulo)" }}
                     >
-                      {emailLoading ? "BUSCANDO..." : "BUSCAR MINHA FIGURINHA"}
+                      {emailLoading ? "BUSCANDO..." : "BUSCAR MINHA FIGURINHA 📱"}
                     </button>
                     {emailError && (
                       <p className="text-sm text-red-600 text-center" style={{ fontFamily: "var(--font-papernotes)" }}>
