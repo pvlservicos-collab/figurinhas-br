@@ -176,8 +176,6 @@ export async function POST(req: NextRequest) {
     fotoBufferComprimido = fotoBuffer; // fallback: usa original
   }
 
-  const modeloBuffer = await getModeloComprimido();
-
   const nomeUpper = nomeSafe.toUpperCase();
   const clubeFormatted = clubeSafe.toUpperCase();
   const pesoSafe  = peso  ? sanitizeInput(peso,  10) : null;
@@ -188,7 +186,6 @@ export async function POST(req: NextRequest) {
     pesoSafe   ? `${pesoSafe} kg` : null,
   ].filter(Boolean).join(" | ");
 
-  // Prompt com dados sanitizados entre delimitadores
   const prompt = `You are given two images:
 - Image 1: A photograph of a person (the SUBJECT). This person may be a child or an adult.
 - Image 2: A collectible sports sticker card (the TEMPLATE).
@@ -216,19 +213,19 @@ ${pesoSafe || alturaSafe ? `Player stats for reference: ${[alturaSafe ? `height 
 The result must look like a real printed collectible sticker card with a properly proportioned portrait of the person from Image 1.`;
 
   try {
+    // Carregar modelo dentro do try para capturar erros de filesystem
+    const modeloBuffer = await getModeloComprimido();
+
     const randomBase = Math.floor(Math.random() * apiKeys.length);
     const startIdx = typeof retryAttempt === "number" && retryAttempt > 0
       ? (randomBase + retryAttempt) % apiKeys.length
       : randomBase;
 
-    const fotoFile = await toFile(fotoBufferComprimido, "foto.jpg", { type: "image/jpeg" });
-    const modeloFile = await toFile(modeloBuffer, "modelo.webp", { type: "image/webp" });
-
     let imageData = null;
     let successKeyIdx = -1;
     const genStart = Date.now();
     let attempt = 0;
-    const TIMEOUT_MS = 250_000; // margem de segurança antes do maxDuration=300s
+    const TIMEOUT_MS = 250_000;
 
     console.log(`Gerando figurinha — ${apiKeys.length} key(s), começando pela key ${startIdx + 1}...`);
 
@@ -236,8 +233,12 @@ The result must look like a real printed collectible sticker card with a properl
       const keyIdx = (startIdx + attempt) % apiKeys.length;
       const openai = new OpenAI({ apiKey: apiKeys[keyIdx] });
       try {
+        // Recriar os files a cada tentativa — evita stream consumido em iterações anteriores
+        const fotoFile = await toFile(fotoBufferComprimido, "foto.jpg", { type: "image/jpeg" });
+        const modeloFile = await toFile(modeloBuffer, "modelo.webp", { type: "image/webp" });
+
         const response = await openai.images.edit({
-          model: "gpt-image-2",
+          model: "gpt-image-1",
           image: [fotoFile, modeloFile],
           prompt,
           size: "1024x1536",
@@ -307,7 +308,9 @@ The result must look like a real printed collectible sticker card with a properl
       stickerId,
     });
   } catch (error: unknown) {
-    console.error("Erro na geração:", error instanceof Error ? error.message : error);
+    const errMsg = error instanceof Error ? error.message : String(error);
+    const errStack = error instanceof Error ? error.stack : undefined;
+    console.error("OUTER CATCH — erro na geração:", errMsg, errStack ?? "");
     return NextResponse.json({ error: "Erro na geração. Tente novamente." }, { status: 500 });
   }
 }
