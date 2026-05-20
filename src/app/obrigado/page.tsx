@@ -113,25 +113,25 @@ export default function Obrigado() {
   };
 
   return (
-    <main className="flex flex-col items-center min-h-screen px-5 pt-10 pb-8 overflow-x-hidden" style={{ background: "#FFDF00" }}>
+    <main className="flex flex-col items-center min-h-screen px-5 pt-6 md:pt-4 pb-8 overflow-x-hidden" style={{ background: "#FFDF00" }}>
 
       {/* Figurinhas animadas no topo */}
-      <div className="relative w-56 h-56 sm:w-64 sm:h-64 mb-0 flex-shrink-0">
-        <div className="absolute left-0 top-4 w-24 h-36 rounded-xl overflow-hidden shadow-xl z-10"
+      <div className="relative w-40 h-40 sm:w-44 sm:h-44 md:w-48 md:h-48 mb-0 flex-shrink-0">
+        <div className="absolute left-0 top-3 w-16 h-24 md:w-18 md:h-28 rounded-xl overflow-hidden shadow-xl z-10"
           style={{ transform: "rotate(-8deg)", animation: "wiggle 5.5s ease-in-out infinite" }}>
           <div className="relative w-full h-full">
-            <Image src="/figurinha-helena.webp" alt="Figurinha Helena" fill className="object-cover" sizes="96px" />
+            <Image src="/figurinha-helena.webp" alt="Figurinha Helena" fill className="object-cover" sizes="64px" />
             <div className="absolute inset-0 shine-effect" />
           </div>
         </div>
-        <div className="absolute left-[58%] -translate-x-1/2 top-2 w-32 h-48 rounded-xl overflow-hidden shadow-2xl z-30"
+        <div className="absolute left-[58%] -translate-x-1/2 top-1 w-24 h-36 rounded-xl overflow-hidden shadow-2xl z-30"
           style={{ animation: "wiggle 5.5s ease-in-out infinite 0.5s" }}>
           <div className="relative w-full h-full">
-            <Image src="/figurinha-arthur.webp" alt="Figurinha Arthur" fill className="object-cover" sizes="128px" />
+            <Image src="/figurinha-arthur.webp" alt="Figurinha Arthur" fill className="object-cover" sizes="96px" />
             <div className="absolute inset-0 shine-effect" style={{ animationDelay: "1s" }} />
           </div>
         </div>
-        <div className="absolute right-0 top-4 w-24 h-36 rounded-xl overflow-hidden shadow-xl z-10"
+        <div className="absolute right-0 top-3 w-16 h-24 md:w-18 md:h-28 rounded-xl overflow-hidden shadow-xl z-10"
           style={{ transform: "rotate(8deg)", animation: "wiggle-down 5.5s ease-in-out infinite 1s" }}>
           <div className="relative w-full h-full">
             <Image src="/figurinha-helena.webp" alt="Figurinha Helena" fill className="object-cover" sizes="96px" />
