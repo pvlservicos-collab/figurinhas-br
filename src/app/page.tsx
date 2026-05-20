@@ -129,6 +129,52 @@ export default function Home() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [appStep]);
 
+  // Rastrear abandono na tela de resultado — 90s depois envia WhatsApp via cron
+  useEffect(() => {
+    if (appStep !== "result" || !stickerId) return;
+
+    let abandonTimer: ReturnType<typeof setTimeout> | null = null;
+    let abandoned = false;
+
+    const sendAbandon = () => {
+      if (abandoned) return;
+      abandoned = true;
+      const { telefone } = dataRef.current;
+      if (!telefone) return;
+      navigator.sendBeacon(
+        "/api/abandono/figurinha",
+        new Blob([JSON.stringify({ telefone, stickerId })], { type: "application/json" })
+      );
+    };
+
+    const onHide = () => { abandonTimer = setTimeout(sendAbandon, 90_000); };
+    const onShow = () => {
+      if (abandonTimer) { clearTimeout(abandonTimer); abandonTimer = null; }
+      if (abandoned) return;
+      const { telefone } = dataRef.current;
+      if (!telefone) return;
+      navigator.sendBeacon(
+        "/api/abandono/figurinha",
+        new Blob([JSON.stringify({ telefone, _cancel: true })], { type: "application/json" })
+      );
+    };
+    const onUnload = () => sendAbandon();
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) onHide(); else onShow();
+    });
+    window.addEventListener("beforeunload", onUnload);
+
+    return () => {
+      if (abandonTimer) clearTimeout(abandonTimer);
+      document.removeEventListener("visibilitychange", () => {
+        if (document.hidden) onHide(); else onShow();
+      });
+      window.removeEventListener("beforeunload", onUnload);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appStep, stickerId]);
+
   // Manter tela ligada durante geração (Wake Lock API)
   useEffect(() => {
     if (appStep !== "loading-generate") return;
