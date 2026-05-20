@@ -199,19 +199,28 @@ The result must look like a real printed collectible sticker card. The portrait 
       ? (randomBase + retryAttempt) % apiKeys.length
       : randomBase;
 
-    let imageData = null;
+    let b64Result: string | null = null;
     let successKeyIdx = -1;
     const genStart = Date.now();
     let attempt = 0;
     const TIMEOUT_MS = 250_000;
+    // Keys permanentemente mortas nesta requisição (auth inválida, quota zerada)
+    const deadKeys = new Set<number>();
 
     console.log(`API start — ${apiKeys.length} key(s), key ${startIdx + 1} primeiro | total até aqui: ${ms(t0)}`);
 
-    while (!imageData && (Date.now() - genStart) < TIMEOUT_MS) {
+    while (!b64Result && (Date.now() - genStart) < TIMEOUT_MS) {
       const keyIdx = (startIdx + attempt) % apiKeys.length;
+
+      if (deadKeys.has(keyIdx)) {
+        // Todas as keys mortas → sem esperança
+        if (deadKeys.size >= apiKeys.length) break;
+        attempt++;
+        continue;
+      }
+
       const openai = new OpenAI({ apiKey: apiKeys[keyIdx] });
       try {
-        // Recriar os files a cada tentativa — evita stream consumido em iterações anteriores
         const fotoFile = await toFile(fotoBufferComprimido, "foto.jpg", { type: "image/jpeg" });
         const modeloFile = await toFile(modeloBuffer, "modelo.webp", { type: "image/webp" });
 
@@ -221,27 +230,38 @@ The result must look like a real printed collectible sticker card. The portrait 
           prompt,
           size: "1024x1536",
         });
-        imageData = response.data?.[0];
-        if (imageData?.b64_json) {
+        const candidate = response.data?.[0]?.b64_json;
+        if (candidate) {
+          b64Result = candidate;
           successKeyIdx = keyIdx;
           console.log(`API ok — key ${keyIdx + 1}, tentativa ${attempt + 1} | API: ${ms(genStart)} | total: ${ms(t0)}`);
         }
       } catch (apiErr: unknown) {
         const errMsg = apiErr instanceof Error ? apiErr.message : String(apiErr);
-        console.log(`Key ${keyIdx + 1} tentativa ${attempt + 1} falhou: ${errMsg.slice(0, 100)}`);
+        const status = (apiErr as { status?: number }).status ?? 0;
+        if (status === 401 || status === 403 || status === 402) {
+          // Key inválida ou quota zerada — não adianta tentar de novo
+          deadKeys.add(keyIdx);
+          console.log(`Key ${keyIdx + 1} morta (${status}): ${errMsg.slice(0, 80)}`);
+        } else if (status === 429) {
+          // Rate limit — espera 5s antes de tentar outra key
+          console.log(`Key ${keyIdx + 1} rate-limited, aguardando 5s...`);
+          await new Promise(r => setTimeout(r, 5000));
+        } else {
+          console.log(`Key ${keyIdx + 1} tentativa ${attempt + 1} erro (${status}): ${errMsg.slice(0, 80)}`);
+        }
       }
       attempt++;
     }
 
     const generationMs = Date.now() - genStart;
 
-    if (!imageData?.b64_json) {
+    if (!b64Result) {
       return NextResponse.json({ error: "Falha na geração" }, { status: 422 });
     }
 
-    // Salvar figurinha no Vercel Blob + criar preview em paralelo
     const stickerId = randomUUID();
-    const stickerBuffer = Buffer.from(imageData.b64_json, "base64");
+    const stickerBuffer = Buffer.from(b64Result, "base64");
 
     const createPreview = async (): Promise<Buffer | null> => {
       try {
@@ -282,7 +302,7 @@ The result must look like a real printed collectible sticker card. The portrait 
 
     console.log(`Figurinha salva: ${stickerId} | TOTAL: ${ms(t0)}`);
     return NextResponse.json({
-      imageBase64: imageData.b64_json,
+      imageBase64: b64Result,
       mimeType: "image/png",
       stickerId,
     });
