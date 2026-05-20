@@ -253,7 +253,7 @@ The result must look like a real printed collectible sticker card with a properl
         const modeloFile = await toFile(modeloBuffer, "modelo.webp", { type: "image/webp" });
 
         const response = await openai.images.edit({
-          model: "gpt-image-1",
+          model: "gpt-image-2",
           image: [fotoFile, modeloFile],
           prompt,
           size: "1024x1536",
