@@ -216,9 +216,10 @@ ${pesoSafe || alturaSafe ? `Player stats for reference: ${[alturaSafe ? `height 
 The result must look like a real printed collectible sticker card with a properly proportioned portrait of the person from Image 1.`;
 
   try {
+    const randomBase = Math.floor(Math.random() * apiKeys.length);
     const startIdx = typeof retryAttempt === "number" && retryAttempt > 0
-      ? retryAttempt % apiKeys.length
-      : 0;
+      ? (randomBase + retryAttempt) % apiKeys.length
+      : randomBase;
 
     const fotoFile = await toFile(fotoBufferComprimido, "foto.jpg", { type: "image/jpeg" });
     const modeloFile = await toFile(modeloBuffer, "modelo.webp", { type: "image/webp" });

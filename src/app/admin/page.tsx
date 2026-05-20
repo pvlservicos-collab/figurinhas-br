@@ -66,7 +66,7 @@ const STEP_LABEL: Record<string, string> = {
   obrigado:     "Comprou ✓",
 };
 
-type Period = "today" | "7d" | "30d" | "all";
+type Period = "today" | "7d" | "30d" | "all" | "1h" | "2h" | "3h" | "4h" | "5h" | "6h" | "7h" | "8h" | "9h" | "10h" | "11h" | "12h";
 
 const EMPTY: FunilData = { funnel: [], leads: [], pagos: 0, obrigados: [], daily: [] };
 
@@ -236,6 +236,9 @@ export default function AdminDashboard() {
     { key: "all",  label: "Tudo" },
   ];
 
+  const hourPeriods = [1,2,3,4,5,6,7,8,9,10,11,12].map(h => ({ key: `${h}h` as Period, label: `${h}h` }));
+  const selectedHour = hourPeriods.find(h => h.key === period)?.key ?? "";
+
   const KPI_CARDS = [
     { label: "Sessões",   value: totalSessions,         sub: "com email capturado",  color: "#0F172A" },
     { label: "CTA",       value: ctaCount,              sub: "clicaram em comprar",  color: "#a855f7" },
@@ -253,13 +256,23 @@ export default function AdminDashboard() {
           <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: ".04em" }}>FIGURINHA</span>
         </div>
         <h1 style={{ fontSize: 16, fontWeight: 600, color: "#93c5fd", flex: 1, margin: 0 }}>Dashboard Analytics</h1>
-        <div style={{ display: "flex", gap: 6 }}>
+        <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
           {PERIODS.map(p => (
             <button key={p.key} onClick={() => { setPeriod(p.key); setCountdown(60); }}
               style={{ background: period === p.key ? "#3b82f6" : "transparent", color: period === p.key ? "#fff" : "#94A3B8", border: `1px solid ${period === p.key ? "#3b82f6" : "#333"}`, borderRadius: 6, padding: "5px 12px", cursor: "pointer", fontSize: 12, fontWeight: 600, transition: "all .15s" }}>
               {p.label}
             </button>
           ))}
+          <select
+            value={selectedHour}
+            onChange={e => { if (e.target.value) { setPeriod(e.target.value as Period); setCountdown(60); } }}
+            style={{ background: selectedHour ? "#3b82f6" : "#1a1a1a", color: selectedHour ? "#fff" : "#94A3B8", border: `1px solid ${selectedHour ? "#3b82f6" : "#333"}`, borderRadius: 6, padding: "5px 10px", cursor: "pointer", fontSize: 12, fontWeight: 600, outline: "none" }}
+          >
+            <option value="">⏱ horas</option>
+            {hourPeriods.map(h => (
+              <option key={h.key} value={h.key}>{h.label}</option>
+            ))}
+          </select>
         </div>
         <span style={{ fontSize: 11, color: "#555", marginLeft: "auto" }}>
           {loading ? "Carregando..." : `Atualiza em ${countdown}s`}

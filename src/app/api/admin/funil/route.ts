@@ -8,7 +8,11 @@ export async function GET(req: NextRequest) {
 
   let cutoff: Date | null = null;
   const now = new Date();
-  if (period === "today") {
+  const hourMatch = period.match(/^(\d+)h$/);
+  if (hourMatch) {
+    const h = parseInt(hourMatch[1]);
+    const d = new Date(now); d.setHours(d.getHours() - h); cutoff = d;
+  } else if (period === "today") {
     cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   } else if (period === "7d") {
     const d = new Date(now); d.setDate(d.getDate() - 7); cutoff = d;
