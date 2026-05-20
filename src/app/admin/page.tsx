@@ -82,7 +82,7 @@ export default function AdminDashboard() {
 
   // Busca de figurinha por nome
   const [searchQuery, setSearchQuery]   = useState("");
-  const [searchResults, setSearchResults] = useState<{ id: number; nome: string; email: string; sticker_url: string | null; status: string; created_at: string }[]>([]);
+  const [searchResults, setSearchResults] = useState<{ id: number; nome: string; email: string; telefone: string | null; sticker_url: string | null; status: string; created_at: string }[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchDone, setSearchDone]       = useState(false);
 
@@ -213,6 +213,17 @@ export default function AdminDashboard() {
     fetchData(period);
   };
 
+  const downloadWhatsApp = () => {
+    const phones = data.leads
+      .map(l => ({ nome: l.nome || "", tel: String(l.telefone || l.email || "").replace(/\D/g, "") }))
+      .filter(r => r.tel.length >= 10);
+    const rows = ["Nome,Telefone", ...phones.map(r => `"${r.nome}","${r.tel}"`)];
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["﻿" + rows.join("\n")], { type: "text/csv;charset=utf-8;" }));
+    a.download = "whatsapp-contatos.csv";
+    a.click();
+  };
+
   const downloadCSV = () => {
     const rows = [
       ["Nome", "Email", "Telefone", "Último card", "Clicou comprar", "Data"].join(","),
@@ -338,7 +349,7 @@ export default function AdminDashboard() {
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                 <thead>
                   <tr>
-                    {["Nome", "Email", "Status", "Data", "Figurinha", "Link"].map(h => (
+                    {["Nome", "Telefone", "Status", "Data", "Figurinha", "Link"].map(h => (
                       <th key={h} style={{ background: "#F8FAFC", borderBottom: "1px solid #E2E8F0", padding: "8px 12px", textAlign: "left", fontWeight: 700, color: "#64748B", fontSize: 11, textTransform: "uppercase", letterSpacing: ".04em" }}>{h}</th>
                     ))}
                   </tr>
@@ -347,7 +358,11 @@ export default function AdminDashboard() {
                   {searchResults.map(p => (
                     <tr key={p.id} style={{ borderBottom: "1px solid #F1F5F9" }}>
                       <td style={{ padding: "8px 12px", color: "#334155", fontWeight: 600 }}>{p.nome || "—"}</td>
-                      <td style={{ padding: "8px 12px", color: "#64748B" }}>{p.email}</td>
+                      <td style={{ padding: "8px 12px" }}>
+                        {(p.telefone || p.email)
+                          ? <a href={`https://wa.me/${(p.telefone || p.email || "").replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" style={{ color: "#059669", fontWeight: 600, textDecoration: "none" }}>{p.telefone || p.email}</a>
+                          : <span style={{ color: "#CBD5E1" }}>—</span>}
+                      </td>
                       <td style={{ padding: "8px 12px" }}>
                         <span style={{ padding: "2px 8px", borderRadius: 99, fontSize: 10, fontWeight: 700, background: p.status === "entregue" ? "#D1FAE5" : "#FEF3C7", color: p.status === "entregue" ? "#065F46" : "#92400E" }}>
                           {p.status}
@@ -372,12 +387,9 @@ export default function AdminDashboard() {
                         )}
                       </td>
                       <td style={{ padding: "8px 12px" }}>
-                        {p.email && (
+                        {p.sticker_url && (
                           <button
-                            onClick={() => {
-                              const link = `https://gerarfigurinhas.vercel.app/obrigado?email=${encodeURIComponent(p.email)}`;
-                              navigator.clipboard.writeText(link);
-                            }}
+                            onClick={() => navigator.clipboard.writeText(p.sticker_url!)}
                             style={{ background: "#6366f1", color: "#fff", border: "none", borderRadius: 6, padding: "5px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer" }}
                           >
                             🔗 Copiar link
@@ -481,6 +493,10 @@ export default function AdminDashboard() {
               <button onClick={downloadCSV}
                 style={{ background: "#3b82f6", color: "#fff", border: "none", borderRadius: 8, padding: "7px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
                 ⬇ Exportar CSV
+              </button>
+              <button onClick={downloadWhatsApp}
+                style={{ background: "#25D366", color: "#fff", border: "none", borderRadius: 8, padding: "7px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                📱 Exportar WhatsApp
               </button>
             </div>
           </div>

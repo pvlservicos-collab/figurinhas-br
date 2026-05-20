@@ -4,32 +4,25 @@ import { getDb } from "@/lib/db";
 function periodToInterval(period: string): string | null {
   const hourMatch = period.match(/^(\d+)h$/);
   if (hourMatch) return `${hourMatch[1]} hours`;
-  if (period === "today") return "1 day";   // aproximado; cobre últimas 24h
+  if (period === "today") return "24 hours";
   if (period === "7d")    return "7 days";
   if (period === "30d")   return "30 days";
-  return null; // "all" — sem filtro
+  return null;
 }
 
 export async function GET(req: NextRequest) {
   const sql = getDb();
   const { searchParams } = new URL(req.url);
   const period = searchParams.get("period") || "all";
-
-  // "today" usa meia-noite local; os demais usam intervalo relativo
-  const useToday = period === "today";
   const interval = periodToInterval(period);
 
-  // Fragmentos SQL reutilizáveis
+  // Usar cast ::interval para que o parâmetro seja aceito pelo PostgreSQL
   const pfSession = interval
-    ? useToday
-      ? sql`AND s.updated_at >= (NOW() AT TIME ZONE 'America/Sao_Paulo')::date`
-      : sql`AND s.updated_at >= NOW() - INTERVAL ${interval}`
+    ? sql`AND s.updated_at >= NOW() - ${interval}::interval`
     : sql``;
 
   const pfSimple = interval
-    ? useToday
-      ? sql`AND updated_at >= (NOW() AT TIME ZONE 'America/Sao_Paulo')::date`
-      : sql`AND updated_at >= NOW() - INTERVAL ${interval}`
+    ? sql`AND updated_at >= NOW() - ${interval}::interval`
     : sql``;
 
   const [funnel, leads, pagos, obrigados, daily] = await Promise.all([
@@ -58,8 +51,8 @@ export async function GET(req: NextRequest) {
     `,
     sql`
       SELECT COUNT(*)::int as count
-      FROM pedidos WHERE status IN ('pago','entregue','recuperado')
-      ${pfSimple}
+      FROM pedidos
+      WHERE status IN ('pago','entregue','recuperado') ${pfSimple}
     `,
     sql`
       SELECT s.session_id, s.email, s.nome,
@@ -78,7 +71,7 @@ export async function GET(req: NextRequest) {
     sql`
       SELECT updated_at::date as day, COUNT(DISTINCT session_id)::int as count
       FROM sessions
-      WHERE email IS NOT NULL AND updated_at >= NOW() - INTERVAL '14 days'
+      WHERE email IS NOT NULL AND updated_at >= NOW() - '14 days'::interval
       GROUP BY day
       ORDER BY day
     `,
